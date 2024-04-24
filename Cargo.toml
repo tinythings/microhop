@@ -1,0 +1,23 @@
+[package]
+name = "microjump"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.38"
+colored = { version = "2.1.0", features = ["no-color"] }
+log = "0.4.21"
+nix = { version = "0.28.0", features = ["kmod", "default", "mount", "hostname", "fs", "feature", "env", "dir", "aio", "acct", "inotify", "user", "zerocopy", "uio", "event", "fanotify", "ioctl", "mman", "mqueue", "net", "personality", "poll", "process", "pthread", "ptrace", "quota", "reboot", "resource", "sched", "socket", "term", "ucontext"] }
+sys-mount = "3.0.1"
+uname = "0.1.1"
+walkdir = "2.5.0"
+zstd = "0.13.1"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
