@@ -1,14 +1,9 @@
 mod kmodprobe;
 mod logger;
 
-use nix::{
-    kmod::{self, ModuleInitFlags},
-    mount::{self, MsFlags},
-    sys::stat,
-    unistd::{self, mkdir},
-};
-use std::{default, ffi::CString, fs::File, io::Error, os, path::Path};
-use sys_mount::{Mount, SupportedFilesystems};
+use nix::{mount::MsFlags, sys::stat, unistd};
+use std::{ffi::CString, io::Error, path::Path};
+use sys_mount::Mount;
 
 static VERSION: &str = "0.0.1";
 static LOGGER: logger::STDOUTLogger = logger::STDOUTLogger;
@@ -28,27 +23,6 @@ fn naive_mount(fstype: &str, dev: &str, mpt: &str) -> Result<(), Error> {
     Ok(())
 }
 
-/// Simple fs mount
-fn xmount(fstype: &str, dev: &str, mpt: &str) -> Result<(), Error> {
-    if fstype != "proc" && !Path::new("/proc/filesystems").exists() {
-        return Err(Error::new(std::io::ErrorKind::NotFound, "'proc' should be mounted first"));
-    }
-
-    if let Ok(sfs) = SupportedFilesystems::new() {
-        if sfs.is_supported(fstype) {
-            if let Err(err) = Mount::builder().fstype(fstype).mount(dev, mpt) {
-                return Err(Error::new(std::io::ErrorKind::NotConnected, format!("Failed to mount {}: {}", fstype, err)));
-            } else {
-                log::info!("Mounted {} at {} as {}", dev, mpt, fstype);
-            }
-        } else {
-            return Err(Error::new(std::io::ErrorKind::Unsupported, format!("Filesystem {} is not supported", fstype)));
-        }
-    }
-
-    Ok(())
-}
-
 fn main() -> Result<(), Error> {
     if let Err(err) = init(&false) {
         return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
@@ -59,13 +33,16 @@ fn main() -> Result<(), Error> {
 
     // Load required modules
     let mpb = kmodprobe::KModProbe::new();
+    #[allow(clippy::single_element_loop)] // this is a PoC
     for mname in ["virtio_blk"] {
         mpb.modprobe(mname);
     }
 
     // Create sysroot entry point
-    let mj_rfsp = "/microjump_rfs";
-    unistd::mkdir(Path::new(mj_rfsp), stat::Mode::S_IRUSR)?;
+    let mj_rfsp = "/sysroot";
+    if !Path::new(mj_rfsp).exists() {
+        unistd::mkdir(mj_rfsp, stat::Mode::S_IRUSR)?;
+    }
 
     // Mount required dirs
     let mountpoints: Vec<(&str, &str, &str)> = vec![
@@ -87,7 +64,6 @@ fn main() -> Result<(), Error> {
         if t.0 != "ext4" {
             nix::mount::umount(t.2)?;
             naive_mount(t.0, t.1, format!("{}{}", mj_rfsp, t.2).as_str())?;
-            log::info!("Remounted {} to a new location", t.0);
         }
     }
 
