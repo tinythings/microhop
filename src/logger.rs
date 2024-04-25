@@ -1,4 +1,3 @@
-use chrono::Local;
 use colored::{self, Colorize};
 use log::{Level, Metadata, Record};
 
@@ -20,7 +19,9 @@ impl log::Log for STDOUTLogger {
                 log::Level::Trace => format!("{}", m.cyan()),
             };
 
-            println!("[{}] {}", Local::now().format("%H:%M:%S%.6f"), l_msg);
+            let tsb = nix::time::clock_gettime(nix::time::ClockId::CLOCK_BOOTTIME);
+            let dsb = std::time::Duration::from(tsb.unwrap());
+            println!("[{:12.6}][{:>6}] {}", dsb.as_secs_f32(), format!("T{}", dsb.as_secs()), l_msg);
         }
     }
 
