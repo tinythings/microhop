@@ -7,6 +7,11 @@ use std::{
 };
 use walkdir::WalkDir;
 
+/// Modprobe utility to load kernel modules.
+/// Currently it is looking for the modules only in /lib/modules/<kernel> directory,
+/// which is usually sufficient for the initramfs purposes.
+///
+/// Modules are expected to be either uncompressed ELF binaries or compressed with ZStandard.
 pub struct KModProbe {
     km_path: PathBuf,
 }
