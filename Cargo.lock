@@ -270,7 +270,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "microjump"
+name = "microhop"
 version = "0.1.0"
 dependencies = [
  "chrono",
