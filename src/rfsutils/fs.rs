@@ -1,6 +1,7 @@
 use nix::{mount::MsFlags, sys::statvfs, unistd};
-use std::io::Error;
+use std::{fs, io::Error};
 use sys_mount::Mount;
+use walkdir::WalkDir;
 
 /// Utilities for the root filesystem operations.
 ///
@@ -12,8 +13,34 @@ fn fs_type(p: &str) -> Result<u64, Error> {
     Ok(statvfs::statvfs(p)?.filesystem_id())
 }
 
-/// Recursively removes everything from the specific filesystem
-fn rmrf() {}
+/// Recursively removes everything from the ramfs
+fn rmrf() -> Result<(), Error> {
+    fn is_sys(e: &str) -> bool {
+        let sr = "/sysroot";
+        for d in ["/proc", "/sys", "/dev", sr] {
+            if e != "/"
+                || e.starts_with(d)
+                || e.starts_with(format!("{}{}", sr, d).as_str())
+                || e.starts_with(format!("{}{}/", sr, d).as_str())
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    WalkDir::new("/").into_iter().flat_map(|r| r.ok()).for_each(|e| {
+        let p = e.path().as_os_str().to_str().unwrap_or_default();
+        if let Ok(fst) = fs_type(p) {
+            if fst == 0 && !is_sys(p) && e.path().is_dir() {
+                //println!("{} : {:?}", fst, e.path());
+                fs::remove_dir_all(e.path()).unwrap_or_default();
+            }
+        }
+    });
+    Ok(())
+}
 
 /// Mounts mountpoint
 pub fn mount(fstype: &str, dev: &str, dst: &str) -> Result<(), Error> {
@@ -33,9 +60,13 @@ pub fn umount(dst: &str) -> Result<(), Error> {
 
 /// Switches root
 pub fn pivot(temp: &str, fstype: &str) -> Result<(), Error> {
+    rmrf()?;
+    log::info!("mhp: free ramfs");
+
     unistd::chdir(temp)?;
     nix::mount::mount(Some("."), "/", Some(fstype), MsFlags::MS_MOVE, Option::<&str>::None)?;
     unistd::chroot(".")?;
+    log::info!("mhp: enter the rootfs");
 
     Ok(())
 }
