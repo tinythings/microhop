@@ -19,7 +19,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Say hello
-    log::info!("Microhop {}", VERSION);
+    log::info!("Welcome to the Microhop {}!", VERSION);
 
     // Load required modules
     let mpb = kmodprobe::KModProbe::new();
@@ -61,8 +61,7 @@ fn main() -> Result<(), Error> {
 
     // Switch root
     rfsutils::fs::pivot(temp_mpt, "ext4")?;
-
-    log::info!("good. Next!");
+    log::info!("mhp: enter the main init");
 
     // Start external init
     unistd::execv(&CString::new("/usr/bin/bash").unwrap(), &Vec::<CString>::default())?;
