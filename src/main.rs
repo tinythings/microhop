@@ -1,9 +1,9 @@
-mod kmodprobe;
 mod logger;
+mod rfsutils;
 
-use nix::{mount::MsFlags, sys::stat, unistd};
+use crate::rfsutils::kmodprobe;
+use nix::{sys::stat, unistd};
 use std::{ffi::CString, io::Error, path::Path};
-use sys_mount::Mount;
 
 static VERSION: &str = "0.0.1";
 static LOGGER: logger::STDOUTLogger = logger::STDOUTLogger;
@@ -13,23 +13,13 @@ fn init(debug: &bool) -> Result<(), log::SetLoggerError> {
     log::set_logger(&LOGGER).map(|()| log::set_max_level(if *debug { log::LevelFilter::Trace } else { log::LevelFilter::Info }))
 }
 
-fn naive_mount(fstype: &str, dev: &str, mpt: &str) -> Result<(), Error> {
-    if let Err(err) = Mount::builder().fstype(fstype).mount(dev, mpt) {
-        return Err(Error::new(std::io::ErrorKind::NotConnected, format!("Failed to mount {}: {}", fstype, err)));
-    } else {
-        log::info!("Mounted {} at {} as {}", dev, mpt, fstype);
-    }
-
-    Ok(())
-}
-
 fn main() -> Result<(), Error> {
     if let Err(err) = init(&false) {
         return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
     }
 
     // Say hello
-    log::info!("Microjump {}", VERSION);
+    log::info!("Microhop {}", VERSION);
 
     // Load required modules
     let mpb = kmodprobe::KModProbe::new();
@@ -39,9 +29,9 @@ fn main() -> Result<(), Error> {
     }
 
     // Create sysroot entry point
-    let mj_rfsp = "/sysroot";
-    if !Path::new(mj_rfsp).exists() {
-        unistd::mkdir(mj_rfsp, stat::Mode::S_IRUSR)?;
+    let temp_mpt = "/sysroot";
+    if !Path::new(temp_mpt).exists() {
+        unistd::mkdir(temp_mpt, stat::Mode::S_IRUSR)?;
     }
 
     // Mount required dirs
@@ -50,11 +40,13 @@ fn main() -> Result<(), Error> {
         ("sysfs", "none", "/sys"),
         ("devtmpfs", "devtmpfs", "/dev"),
         // External disks. Here just main for now
-        ("ext4", "/dev/vda3", mj_rfsp),
+        ("ext4", "/dev/vda3", temp_mpt),
+        // The other partitions should go like:
+        // ("fstype", "/dev/device", temp_mpt + "/mountpoint"),
     ];
 
     for t in &mountpoints {
-        match naive_mount(t.0, t.1, t.2) {
+        match rfsutils::fs::mount(t.0, t.1, t.2) {
             Ok(_) => (),
             Err(err) => log::error!("Error: {}", err),
         }
@@ -62,15 +54,15 @@ fn main() -> Result<(), Error> {
 
     for t in &mountpoints {
         if t.0 != "ext4" {
-            nix::mount::umount(t.2)?;
-            naive_mount(t.0, t.1, format!("{}{}", mj_rfsp, t.2).as_str())?;
+            rfsutils::fs::umount(t.2)?;
+            rfsutils::fs::mount(t.0, t.1, format!("{}{}", temp_mpt, t.2).as_str())?;
         }
     }
 
     // Switch root
-    nix::unistd::chdir(mj_rfsp)?;
-    nix::mount::mount(Some("."), "/", Some("ext4"), MsFlags::MS_MOVE, Option::<&str>::None)?;
-    nix::unistd::chroot(".")?;
+    rfsutils::fs::pivot(temp_mpt, "ext4")?;
+
+    log::info!("good. Next!");
 
     // Start external init
     unistd::execv(&CString::new("/usr/bin/bash").unwrap(), &Vec::<CString>::default())?;
