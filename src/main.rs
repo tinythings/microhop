@@ -1,61 +1,88 @@
+mod conf;
 mod logger;
 mod rfsutils;
 
 use crate::rfsutils::kmodprobe;
+use conf::MhConfig;
 use nix::{sys::stat, unistd};
 use std::{ffi::CString, io::Error, path::Path};
 
 static VERSION: &str = "0.0.1";
 static LOGGER: logger::STDOUTLogger = logger::STDOUTLogger;
 
-/// Initialise logger
-fn init(debug: &bool) -> Result<(), log::SetLoggerError> {
-    log::set_logger(&LOGGER).map(|()| log::set_max_level(if *debug { log::LevelFilter::Trace } else { log::LevelFilter::Info }))
-}
-
-fn main() -> Result<(), Error> {
-    if let Err(err) = init(&false) {
-        return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
-    }
-
+// Initial greetings
+fn greet(cfg: &MhConfig) -> Result<(), Error> {
     // Say hello
     log::info!("Welcome to the Microhop {}!", VERSION);
 
+    // Debug itsel
+    log::debug!("Init program: {}", cfg.get_init_path());
+    for dsk in cfg.get_disks()? {
+        log::debug!(
+            "Disk device: {}, fs type: {}, mountpoint: {:?}, mode: {}",
+            dsk.get_device(),
+            dsk.get_fstype(),
+            dsk.as_pathbuf(),
+            dsk.get_mode()
+        );
+    }
+    log::debug!("Kernel modules:");
+    for m in cfg.get_modules() {
+        log::debug!("- {}", m);
+    }
+
+    Ok(())
+}
+
+fn main() -> Result<(), Error> {
+    // Set logger
+    let cfg = conf::get_mh_config()?;
+    log::set_logger(&LOGGER).map(|()| log::set_max_level(cfg.get_log_level())).unwrap();
+
+    greet(&cfg)?;
+
     // Load required modules
     let mpb = kmodprobe::KModProbe::new();
-    #[allow(clippy::single_element_loop)] // this is a PoC
-    for mname in ["virtio_blk"] {
+    for mname in cfg.get_modules() {
         mpb.modprobe(mname);
+    }
+    if !cfg.get_modules().is_empty() {
+        log::info!("loaded required kernel modules");
     }
 
     // Create sysroot entry point
-    let temp_mpt = "/sysroot";
+    let temp_mpt = &cfg.get_sysroot_path();
     if !Path::new(temp_mpt).exists() {
-        unistd::mkdir(temp_mpt, stat::Mode::S_IRUSR)?;
+        unistd::mkdir(temp_mpt.as_str(), stat::Mode::S_IRUSR)?;
     }
 
     // Mount required dirs
-    let mountpoints: Vec<(&str, &str, &str)> = vec![
-        ("proc", "none", "/proc"), // Has to go always first
-        ("sysfs", "none", "/sys"),
-        ("devtmpfs", "devtmpfs", "/dev"),
-        // External disks. Here just main for now
-        ("ext4", "/dev/vda3", temp_mpt),
-        // The other partitions should go like:
-        // ("fstype", "/dev/device", temp_mpt + "/mountpoint"),
+    let mut mountpoints: Vec<(String, String, String)> = vec![
+        ("proc".into(), "none".into(), "/proc".into()), // Has to go always first
+        ("sysfs".into(), "none".into(), "/sys".into()),
+        ("devtmpfs".into(), "devtmpfs".into(), "/dev".into()),
     ];
 
+    for dev in cfg.get_disks()? {
+        mountpoints.push((
+            dev.get_fstype().into(),
+            dev.get_device(),
+            format!("{}{}", temp_mpt, dev.get_mountpoint()).trim_end_matches("/").to_string(),
+        ));
+    }
+
     for t in &mountpoints {
-        match rfsutils::fs::mount(t.0, t.1, t.2) {
+        match rfsutils::fs::mount(&t.0, &t.1, &t.2) {
             Ok(_) => (),
             Err(err) => log::error!("Error: {}", err),
         }
     }
 
+    let sysfs = vec!["proc", "sysfs", "devtmpfs"];
     for t in &mountpoints {
-        if t.0 != "ext4" {
-            rfsutils::fs::umount(t.2)?;
-            rfsutils::fs::mount(t.0, t.1, format!("{}{}", temp_mpt, t.2).as_str())?;
+        if sysfs.contains(&t.0.as_str()) {
+            rfsutils::fs::umount(&t.2)?;
+            rfsutils::fs::mount(&t.0, &t.1, format!("{}{}", temp_mpt, t.2).as_str())?;
         }
     }
 
@@ -64,7 +91,7 @@ fn main() -> Result<(), Error> {
     log::debug!("enter the main init");
 
     // Start external init
-    unistd::execv(&CString::new("/usr/bin/bash").unwrap(), &Vec::<CString>::default())?;
+    unistd::execv(&CString::new(cfg.get_init_path()).unwrap(), &Vec::<CString>::default())?;
 
     Ok(())
 }
