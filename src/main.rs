@@ -63,13 +63,16 @@ fn main() -> Result<(), Error> {
         ("devtmpfs".into(), "devtmpfs".into(), "/dev".into()),
     ];
 
+    let mut root_fstype = String::new();
     for dev in cfg.get_disks()? {
-        mountpoints.push((
-            dev.get_fstype().into(),
-            dev.get_device(),
-            format!("{}{}", temp_mpt, dev.get_mountpoint()).trim_end_matches("/").to_string(),
-        ));
+        let mpt = dev.get_mountpoint().trim_end_matches("/").to_string();
+        if mpt.is_empty() {
+            root_fstype = dev.get_fstype().into();
+        }
+        mountpoints.push((dev.get_fstype().into(), dev.get_device(), format!("{}{}", temp_mpt, mpt)));
     }
+
+    assert!(!root_fstype.is_empty(), "Filesystem type for root was not found");
 
     for t in &mountpoints {
         match rfsutils::fs::mount(&t.0, &t.1, &t.2) {
@@ -87,7 +90,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Switch root
-    rfsutils::fs::pivot(temp_mpt, "ext4")?;
+    rfsutils::fs::pivot(temp_mpt, root_fstype.as_str())?;
     log::debug!("enter the main init");
 
     // Start external init
