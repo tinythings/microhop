@@ -61,7 +61,7 @@ fn main() -> Result<(), Error> {
 
     // Switch root
     rfsutils::fs::pivot(temp_mpt, "ext4")?;
-    log::info!("mhp: enter the main init");
+    log::debug!("enter the main init");
 
     // Start external init
     unistd::execv(&CString::new("/usr/bin/bash").unwrap(), &Vec::<CString>::default())?;

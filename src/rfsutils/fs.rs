@@ -47,7 +47,7 @@ pub fn mount(fstype: &str, dev: &str, dst: &str) -> Result<(), Error> {
     if let Err(err) = Mount::builder().fstype(fstype).mount(dev, dst) {
         return Err(Error::new(std::io::ErrorKind::NotConnected, format!("Failed to mount {}: {}", fstype, err)));
     } else {
-        log::info!("Mounted {} at {} as {}", dev, dst, fstype);
+        log::debug!("Mounted {} at {} as {}", dev, dst, fstype);
     }
 
     Ok(())
@@ -61,12 +61,12 @@ pub fn umount(dst: &str) -> Result<(), Error> {
 /// Switches root
 pub fn pivot(temp: &str, fstype: &str) -> Result<(), Error> {
     rmrf()?;
-    log::info!("mhp: free ramfs");
+    log::debug!("free ramfs");
 
     unistd::chdir(temp)?;
     nix::mount::mount(Some("."), "/", Some(fstype), MsFlags::MS_MOVE, Option::<&str>::None)?;
     unistd::chroot(".")?;
-    log::info!("mhp: enter the rootfs");
+    log::debug!("enter the rootfs");
 
     Ok(())
 }
