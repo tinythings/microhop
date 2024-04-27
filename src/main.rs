@@ -71,6 +71,7 @@ fn main() -> Result<(), Error> {
             root_fstype = dev.get_fstype().into();
         }
         mountpoints.push((dev.get_fstype().into(), dev.get_device(), format!("{}{}", temp_mpt, mpt)));
+        mountpoints.push((dev.get_fstype().into(), dev.get_device().into(), format!("{}{}", temp_mpt, mpt)));
     }
 
     assert!(!root_fstype.is_empty(), "Filesystem type for root was not found");
