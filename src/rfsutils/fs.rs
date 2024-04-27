@@ -34,7 +34,6 @@ fn rmrf() -> Result<(), Error> {
         let p = e.path().as_os_str().to_str().unwrap_or_default();
         if let Ok(fst) = fs_type(p) {
             if fst == 0 && !is_sys(p) && e.path().is_dir() {
-                //println!("{} : {:?}", fst, e.path());
                 fs::remove_dir_all(e.path()).unwrap_or_default();
             }
         }
@@ -45,7 +44,10 @@ fn rmrf() -> Result<(), Error> {
 /// Mounts mountpoint
 pub fn mount(fstype: &str, dev: &str, dst: &str) -> Result<(), Error> {
     if let Err(err) = Mount::builder().fstype(fstype).mount(dev, dst) {
-        return Err(Error::new(std::io::ErrorKind::NotConnected, format!("Failed to mount {}: {}", fstype, err)));
+        return Err(Error::new(
+            std::io::ErrorKind::NotConnected,
+            format!("Failed to mount {} on {} as {}: {}", fstype, dev, dst, err),
+        ));
     } else {
         log::debug!("Mounted {} at {} as {}", dev, dst, fstype);
     }
