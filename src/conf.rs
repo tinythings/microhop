@@ -19,8 +19,8 @@ pub struct MhConfDisk {
 
 impl MhConfDisk {
     /// Return path to the disk storage device
-    pub fn get_device(&self) -> String {
-        format!("/dev/{}", &self.device)
+    pub fn get_device(&self) -> &str {
+        &self.device
     }
 
     /// Return filesystem type
