@@ -66,7 +66,7 @@ fn main() -> Result<(), Error> {
 
     let mut root_fstype = String::new();
     for dev in cfg.get_disks()? {
-        let mpt = dev.get_mountpoint().trim_end_matches("/").to_string();
+        let mpt = dev.get_mountpoint().trim_end_matches('/').to_string();
         if mpt.is_empty() {
             root_fstype = dev.get_fstype().into();
         }
@@ -82,7 +82,7 @@ fn main() -> Result<(), Error> {
         }
     }
 
-    let sysfs = vec!["proc", "sysfs", "devtmpfs"];
+    let sysfs = ["proc", "sysfs", "devtmpfs"];
     for t in &mountpoints {
         if sysfs.contains(&t.0.as_str()) {
             rfsutils::fs::umount(&t.2)?;

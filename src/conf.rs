@@ -62,11 +62,11 @@ impl MhConfig {
 
     /// Parse disk options, return default
     fn get_disk_opts(&self, opts: &str) -> Result<(String, String, String), Error> {
-        let t = opts.split(",").collect::<Vec<&str>>();
+        let t = opts.split(',').collect::<Vec<&str>>();
         match t.len() {
             n if n > 1 && n < 3 => Ok((t[0].to_string(), t[1].to_string(), "rw".to_string())),
-            n if n == 3 => Ok((t[0].to_string(), t[1].to_string(), t[2].to_string())),
-            _ => return Err(Error::new(ErrorKind::InvalidData, format!("Disk options are incorrect: {}", opts))),
+            3 => Ok((t[0].to_string(), t[1].to_string(), t[2].to_string())),
+            _ => Err(Error::new(ErrorKind::InvalidData, format!("Disk options are incorrect: {}", opts))),
         }
     }
 
@@ -122,7 +122,7 @@ pub fn get_mh_config() -> Result<MhConfig, Error> {
     }
 
     match serde_yaml::from_reader(BufReader::new(File::open(p)?)) {
-        Ok(cfg) => return Ok(cfg),
-        Err(err) => return Err(Error::new(std::io::ErrorKind::InvalidData, err)),
-    };
+        Ok(cfg) => Ok(cfg),
+        Err(err) => Err(Error::new(std::io::ErrorKind::InvalidData, err)),
+    }
 }
