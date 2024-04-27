@@ -70,7 +70,6 @@ fn main() -> Result<(), Error> {
         if mpt.is_empty() {
             root_fstype = dev.get_fstype().into();
         }
-        mountpoints.push((dev.get_fstype().into(), dev.get_device(), format!("{}{}", temp_mpt, mpt)));
         mountpoints.push((dev.get_fstype().into(), dev.get_device().into(), format!("{}{}", temp_mpt, mpt)));
     }
 
@@ -79,7 +78,7 @@ fn main() -> Result<(), Error> {
     for t in &mountpoints {
         match rfsutils::fs::mount(&t.0, &t.1, &t.2) {
             Ok(_) => (),
-            Err(err) => log::error!("Error: {}", err),
+            Err(err) => log::error!("Error mounting {}: {}", t.2, err),
         }
     }
 
