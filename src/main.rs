@@ -54,6 +54,7 @@ fn main() -> Result<(), Error> {
     let temp_mpt = &cfg.get_sysroot_path();
     if !Path::new(temp_mpt).exists() {
         unistd::mkdir(temp_mpt.as_str(), stat::Mode::S_IRUSR)?;
+        log::debug!("Temp path: {}", temp_mpt);
     }
 
     // Mount required dirs
