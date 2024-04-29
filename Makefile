@@ -8,7 +8,8 @@ build-static:
 	RUSTFLAGS='-C target-feature=+crt-static' cargo build --target x86_64-unknown-linux-gnu
 
 release:
-	cargo build --release
+	cargo build --release --workspace
 
 build:
-	cargo build
+	cargo build --workspace
+
