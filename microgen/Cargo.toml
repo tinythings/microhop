@@ -1,0 +1,51 @@
+[package]
+name = "microgen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.4", features = [
+    "string",
+    "env",
+    "unicode",
+    "unstable-doc",
+    "unstable-styles",
+    "wrap_help",
+] }
+colored = "2.1.0"
+kmoddep = { path = "../../kmoddep" }
+nix = { version = "0.28.0", features = [
+    "kmod",
+    "default",
+    "mount",
+    "hostname",
+    "fs",
+    "feature",
+    "env",
+    "dir",
+    "aio",
+    "acct",
+    "inotify",
+    "user",
+    "zerocopy",
+    "uio",
+    "event",
+    "fanotify",
+    "ioctl",
+    "mman",
+    "mqueue",
+    "net",
+    "personality",
+    "poll",
+    "process",
+    "pthread",
+    "ptrace",
+    "quota",
+    "reboot",
+    "resource",
+    "sched",
+    "socket",
+    "term",
+    "ucontext",
+    "time",
+] }
