@@ -9,10 +9,10 @@ static APPNAME: &str = "microgen";
 
 pub fn clidef(version: &'static str) -> Command {
     let styles = styling::Styles::styled()
-        .header(styling::AnsiColor::White.on_default() | styling::Effects::BOLD)
-        .usage(styling::AnsiColor::White.on_default() | styling::Effects::BOLD)
-        .literal(styling::AnsiColor::BrightCyan.on_default())
-        .placeholder(styling::AnsiColor::Cyan.on_default());
+        .header(styling::AnsiColor::Yellow.on_default() | styling::Effects::BOLD)
+        .usage(styling::AnsiColor::Yellow.on_default() | styling::Effects::BOLD)
+        .literal(styling::AnsiColor::BrightGreen.on_default())
+        .placeholder(styling::AnsiColor::BrightRed.on_default());
 
     Command::new(APPNAME)
         .version(version)
@@ -21,7 +21,6 @@ pub fn clidef(version: &'static str) -> Command {
             Arg::new("extract")
                 .short('x')
                 .long("extract")
-                .action(clap::ArgAction::SetTrue)
                 .help("Specify comma-separated list of kernel modules to be used.")
                 .value_delimiter(','),
         )
@@ -33,7 +32,14 @@ pub fn clidef(version: &'static str) -> Command {
                 .default_value(format!("{:?}", uname().unwrap().release())),
         )
         .arg(Arg::new("root").short('r').long("root").help("Path to the root filesystem.").default_value("/"))
-        .arg(Arg::new("list").short('l').long("list").action(clap::ArgAction::SetTrue).help("List available kernel versions"))
+        .arg(
+            Arg::new("list")
+                .short('l')
+                .long("list")
+                .action(clap::ArgAction::SetTrue)
+                .help("List available kernel versions")
+                .conflicts_with_all(["extract", "kernel", "root"]),
+        )
         .disable_version_flag(true)
         .disable_colored_help(false)
         .styles(styles)
@@ -51,8 +57,9 @@ fn main() -> Result<(), Error> {
     }
 
     let params = cli.to_owned().get_matches();
-    let infos = kmoddep::get_kernel_infos(params.get_one::<String>("root").unwrap());
+    let x_mods: Vec<String> = params.get_many::<String>("extract").unwrap_or_default().map(|s| s.to_string()).collect();
 
+    let infos = kmoddep::get_kernel_infos(params.get_one::<String>("root").unwrap());
     if params.get_flag("list") {
         println!("{}", "Available kernels:".bright_yellow());
         for i in infos {
@@ -70,6 +77,14 @@ fn main() -> Result<(), Error> {
                 m.instances.to_string().bright_white().bold(),
                 m.dependencies.join(", ").white()
             );
+        }
+    } else if !x_mods.is_empty() {
+        let krel = params.get_one::<String>("kernel").unwrap().replace('"', "");
+        for knfo in infos {
+            let kn = knfo.get_kernel_path().file_name().unwrap().to_str().unwrap().to_string();
+            if krel == kn {
+                println!("{:?}", knfo.get_deps_for(&x_mods.iter().map(|x| x.to_string()).collect::<Vec<String>>()));
+            }
         }
     }
 
