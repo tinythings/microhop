@@ -13,7 +13,7 @@ clap = { version = "4.5.4", features = [
     "wrap_help",
 ] }
 colored = "2.1.0"
-kmoddep = { path = "../../kmoddep" }
+kmoddep = "0.1.1"
 nix = { version = "0.28.0", features = [
     "kmod",
     "default",
