@@ -1,10 +1,9 @@
-mod conf;
 mod logger;
 mod rfsutils;
 
 use crate::rfsutils::kmodprobe;
-use conf::MhConfig;
 use nix::{sys::stat, unistd};
+use profile::cfg::MhConfig;
 use std::{ffi::CString, io::Error, path::Path};
 
 static VERSION: &str = "0.0.1";
@@ -36,7 +35,7 @@ fn greet(cfg: &MhConfig) -> Result<(), Error> {
 
 fn main() -> Result<(), Error> {
     // Set logger
-    let cfg = conf::get_mh_config()?;
+    let cfg = profile::cfg::get_mh_config(None)?;
     log::set_logger(&LOGGER).map(|()| log::set_max_level(cfg.get_log_level())).unwrap();
 
     greet(&cfg)?;

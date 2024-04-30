@@ -16,6 +16,7 @@ indexmap = { version = "2.2.6", features = [
     "rustc-rayon",
     "serde",
 ] }
+kmoddep = "0.1.2"
 log = "0.4.21"
 nix = { version = "0.28.0", features = [
     "kmod",
@@ -58,6 +59,8 @@ sys-mount = "3.0.1"
 uname = "0.1.1"
 walkdir = "2.5.0"
 zstd = "0.13.1"
+profile = { path = "profile" }
+
 
 [profile.release]
 strip = true
@@ -67,4 +70,4 @@ codegen-units = 1
 panic = "abort"
 
 [workspace]
-members = [".", "microgen"]
+members = [".", "profile", "microgen"]

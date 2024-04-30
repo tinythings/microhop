@@ -414,9 +414,9 @@ dependencies = [
 
 [[package]]
 name = "kmoddep"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bc8a6ce94631dcbf57d372bcfd9f9b04e9297ed57a89fdc76bf2657490629fa"
+checksum = "8e7ff3fe46d8e76465cea23673f8b2e031039f1cd33801e688aa2562ae0cbb61"
 
 [[package]]
 name = "lazy_static"
@@ -492,6 +492,7 @@ dependencies = [
  "colored",
  "kmoddep",
  "nix",
+ "profile",
 ]
 
 [[package]]
@@ -501,8 +502,10 @@ dependencies = [
  "chrono",
  "colored",
  "indexmap",
+ "kmoddep",
  "log",
  "nix",
+ "profile",
  "serde",
  "serde_yaml",
  "sys-mount",
@@ -591,6 +594,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d1597b0c024618f09a9c3b8655b7e430397a36d23fdafec26d6965e9eec3eba"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "profile"
+version = "0.1.0"
+dependencies = [
+ "indexmap",
+ "log",
+ "serde",
+ "serde_yaml",
 ]
 
 [[package]]

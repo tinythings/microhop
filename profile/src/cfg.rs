@@ -115,10 +115,10 @@ impl MhConfig {
 }
 
 /// Get the configuration
-pub fn get_mh_config() -> Result<MhConfig, Error> {
-    let p = Path::new(CFG_PATH);
+pub fn get_mh_config(p: Option<&str>) -> Result<MhConfig, Error> {
+    let p = Path::new(if p.is_none() { CFG_PATH } else { p.unwrap() });
     if !p.exists() {
-        return Err(Error::new(ErrorKind::NotFound, format!("Configuration file {} is missing", CFG_PATH)));
+        return Err(Error::new(ErrorKind::NotFound, format!("Configuration file at {} is missing", p.to_str().unwrap())));
     }
 
     match serde_yaml::from_reader(BufReader::new(File::open(p)?)) {
