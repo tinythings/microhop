@@ -1,0 +1,26 @@
+[bumpver]
+current_version = "0.0.2"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "Release to version {new_version}"
+tag_message = "{new_version}"
+tag_scope = "default"
+pre_commit_hook = ""
+post_commit_hook = ""
+commit = true
+tag = true
+push = true
+
+[bumpver.file_patterns]
+"Cargo.toml" = [
+    '^version = "{version}"',
+]
+"profile/Cargo.toml" = [
+    '^version = "{version}"',
+]
+"microgen/Cargo.toml" = [
+    '^version = "{version}"',
+]
+"src/main.rs" = [
+    '^static VERSION: &str = "{version}";',
+]
+
