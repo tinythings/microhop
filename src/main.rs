@@ -6,7 +6,7 @@ use nix::{sys::stat, unistd};
 use profile::cfg::MhConfig;
 use std::{ffi::CString, io::Error, path::Path};
 
-static VERSION: &str = "0.0.1";
+static VERSION: &str = "0.0.2";
 static LOGGER: logger::STDOUTLogger = logger::STDOUTLogger;
 
 // Initial greetings
