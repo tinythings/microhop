@@ -11,16 +11,7 @@ tag = true
 push = true
 
 [bumpver.file_patterns]
-"Cargo.toml" = [
-    '^version = "{version}"',
-]
-"profile/Cargo.toml" = [
-    '^version = "{version}"',
-]
-"microgen/Cargo.toml" = [
-    '^version = "{version}"',
-]
-"src/main.rs" = [
-    '^static VERSION: &str = "{version}";',
-]
-
+"Cargo.toml" = ['^version = "{version}"']
+"profile/Cargo.toml" = ['^version = "{version}"']
+"microgen/Cargo.toml" = ['^version = "{version}"']
+"src/microhop.rs" = ['^static VERSION: &str = "{version}";']
