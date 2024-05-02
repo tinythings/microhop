@@ -43,7 +43,7 @@ impl BlkInfo {
     fn load_dev_stats(&mut self) -> Result<Vec<String>, Error> {
         let mut stats: Vec<String> = Vec::default();
 
-        for l in BufReader::new(File::open("/proc/diskstats")?).lines().flatten() {
+        for l in BufReader::new(File::open("/proc/diskstats")?).lines().map_while(Result::ok) {
             let d: Vec<&str> = l.split_whitespace().collect();
             if d.len() > 2 {
                 stats.push(d[2].to_owned());
