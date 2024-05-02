@@ -1,11 +1,9 @@
+use libblkid_rs::BlkidProbe;
 use std::{
     fs::{self, File},
     io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
 };
-
-use libblkid_rs::BlkidProbe;
-use log::error;
 
 /// Block device metadata.
 /// This contains its path, UUID, size and other info
