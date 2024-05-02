@@ -32,6 +32,7 @@ pub struct BlkInfo {
     devices: Vec<BlkDev>,
 }
 
+#[allow(dead_code)]
 impl BlkInfo {
     pub fn new() -> Self {
         BlkInfo { devices: Vec::default() }
