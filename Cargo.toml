@@ -60,6 +60,8 @@ uname = "0.1.1"
 walkdir = "2.5.0"
 zstd = "0.13.1"
 profile = { path = "profile" }
+libblkid-rs = "0.3.2"
+uuid = "1.8.0"
 
 
 [profile.release]
