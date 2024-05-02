@@ -49,6 +49,7 @@ pub fn mount_fs(filesystems: &Vec<(String, String, String)>) {
     }
 }
 
+#[allow(clippy::type_complexity)]
 /// Get block devices
 pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<(String, String, String)>), Error> {
     let mut root_fstype = String::new();
