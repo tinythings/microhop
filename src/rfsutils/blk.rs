@@ -1,11 +1,9 @@
+use libblkid_rs::BlkidProbe;
 use std::{
     fs::{self, File},
     io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
 };
-
-use libblkid_rs::BlkidProbe;
-use log::error;
 
 /// Block device metadata.
 /// This contains its path, UUID, size and other info
@@ -34,6 +32,7 @@ pub struct BlkInfo {
     devices: Vec<BlkDev>,
 }
 
+#[allow(dead_code)]
 impl BlkInfo {
     pub fn new() -> Self {
         BlkInfo { devices: Vec::default() }
@@ -43,12 +42,11 @@ impl BlkInfo {
     /// This specifically gets only device names
     fn load_dev_stats(&mut self) -> Result<Vec<String>, Error> {
         let mut stats: Vec<String> = Vec::default();
-        for l in BufReader::new(File::open("/proc/diskstats")?).lines() {
-            if let Ok(l) = l {
-                let d: Vec<&str> = l.split_whitespace().collect();
-                if d.len() > 2 {
-                    stats.push(d[2].to_owned());
-                }
+
+        for l in BufReader::new(File::open("/proc/diskstats")?).lines().map_while(Result::ok) {
+            let d: Vec<&str> = l.split_whitespace().collect();
+            if d.len() > 2 {
+                stats.push(d[2].to_owned());
             }
         }
 
@@ -103,24 +101,15 @@ impl BlkInfo {
 
     /// Resolve device by UUID
     pub fn by_uuid(&self, id: &str) -> Option<&BlkDev> {
-        for d in &self.devices {
-            if d.uuid.eq(id) {
-                return Some(d);
-            }
-        }
-        None
+        self.devices.iter().find(|&d| d.uuid.eq(id))
     }
 
     /// Resolve device by /dev/<device> path
     pub fn by_path(&self, p: &str) -> Option<&BlkDev> {
-        for d in &self.devices {
-            if d.path.eq(&PathBuf::from(p)) {
-                return Some(d);
-            }
-        }
-        None
+        self.devices.iter().find(|&d| d.path.eq(&PathBuf::from(p)))
     }
 
+    /// Return all known block devices
     pub fn get_devices(&self) -> &Vec<BlkDev> {
         &self.devices
     }

@@ -116,7 +116,8 @@ impl MhConfig {
 
 /// Get the configuration
 pub fn get_mh_config(p: Option<&str>) -> Result<MhConfig, Error> {
-    let p = Path::new(if p.is_none() { CFG_PATH } else { p.unwrap() });
+    let p = Path::new(if let Some(p) = p { p } else { CFG_PATH });
+
     if !p.exists() {
         return Err(Error::new(ErrorKind::NotFound, format!("Configuration file at {} is missing", p.to_str().unwrap())));
     }

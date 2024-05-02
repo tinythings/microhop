@@ -62,6 +62,7 @@ zstd = "0.13.1"
 profile = { path = "profile" }
 libblkid-rs = "0.3.2"
 uuid = "1.8.0"
+lazy_static = { version = "1.4.0", features = ["spin"] }
 
 
 [profile.release]

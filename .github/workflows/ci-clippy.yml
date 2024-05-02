@@ -1,0 +1,14 @@
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+
+name: (In)sanity check
+jobs:
+  clippy_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup component add clippy
+      - run: cargo clippy -- -Dwarnings
