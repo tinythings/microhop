@@ -1,10 +1,12 @@
 mod logger;
 mod rfsutils;
 
-use crate::rfsutils::kmodprobe;
+use crate::rfsutils::{blk::BlkInfo, kmodprobe};
 use nix::{sys::stat, unistd};
 use profile::cfg::MhConfig;
-use std::{ffi::CString, io::Error, path::Path};
+use serde::de;
+use std::{ffi::CString, fs, io::Error, path::Path};
+use uuid::Uuid;
 
 static VERSION: &str = "0.0.3";
 static LOGGER: logger::STDOUTLogger = logger::STDOUTLogger;
@@ -33,6 +35,10 @@ fn greet(cfg: &MhConfig) -> Result<(), Error> {
     Ok(())
 }
 
+fn mount_sysfs() {}
+
+fn mount_disks() {}
+
 fn main() -> Result<(), Error> {
     // Set logger
     let cfg = profile::cfg::get_mh_config(None)?;
@@ -56,24 +62,12 @@ fn main() -> Result<(), Error> {
         log::debug!("Temp path: {}", temp_mpt);
     }
 
-    // Mount required dirs
+    // Mount required system dirs
     let mut mountpoints: Vec<(String, String, String)> = vec![
         ("proc".into(), "none".into(), "/proc".into()), // Has to go always first
         ("sysfs".into(), "none".into(), "/sys".into()),
         ("devtmpfs".into(), "devtmpfs".into(), "/dev".into()),
     ];
-
-    let mut root_fstype = String::new();
-    for dev in cfg.get_disks()? {
-        let mpt = dev.get_mountpoint().trim_end_matches('/').to_string();
-        if mpt.is_empty() {
-            root_fstype = dev.get_fstype().into();
-        }
-        mountpoints.push((dev.get_fstype().into(), dev.get_device().into(), format!("{}{}", temp_mpt, mpt)));
-    }
-
-    assert!(!root_fstype.is_empty(), "Filesystem type for root was not found");
-
     for t in &mountpoints {
         match rfsutils::fs::mount(&t.0, &t.1, &t.2) {
             Ok(_) => (),
@@ -81,6 +75,44 @@ fn main() -> Result<(), Error> {
         }
     }
 
+    // Detect block devices
+    let mut blkid = BlkInfo::new();
+    blkid.probe_devices()?;
+    for d in blkid.get_devices() {
+        if !d.get_fstype().is_empty() {
+            log::info!("{} partition at {:?} ({})", d.get_fstype(), d.get_path(), d.get_uuid());
+        }
+    }
+
+    // Mount configured block devices
+    let mut blk_mountpoints: Vec<(String, String, String)> = Vec::default();
+    let mut root_fstype = String::new();
+    for dev in cfg.get_disks()? {
+        let mpt = dev.get_mountpoint().trim_end_matches('/').to_string();
+        if mpt.is_empty() {
+            root_fstype = dev.get_fstype().into();
+        }
+
+        let mut devpath = "";
+        if Uuid::parse_str(dev.get_device()).is_ok() {
+            if let Some(blkdev) = blkid.by_uuid(dev.get_device()) {
+                devpath = blkdev.get_path().to_str().unwrap();
+            }
+        } else {
+            devpath = dev.get_device();
+        }
+        blk_mountpoints.push((dev.get_fstype().into(), devpath.into(), format!("{}{}", temp_mpt, mpt)));
+    }
+
+    for t in &blk_mountpoints {
+        match rfsutils::fs::mount(&t.0, &t.1, &t.2) {
+            Ok(_) => (),
+            Err(err) => log::error!("Error mounting {}: {}", t.2, err),
+        }
+    }
+
+    // Remount sysfs, switch root
+    log::debug!("switching root");
     let sysfs = ["proc", "sysfs", "devtmpfs"];
     for t in &mountpoints {
         if sysfs.contains(&t.0.as_str()) {
@@ -88,12 +120,10 @@ fn main() -> Result<(), Error> {
             rfsutils::fs::mount(&t.0, &t.1, format!("{}{}", temp_mpt, t.2).as_str())?;
         }
     }
-
-    // Switch root
     rfsutils::fs::pivot(temp_mpt, root_fstype.as_str())?;
-    log::debug!("enter the main init");
 
     // Start external init
+    log::debug!("launching configured init");
     unistd::execv(&CString::new(cfg.get_init_path()).unwrap(), &Vec::<CString>::default())?;
 
     Ok(())
