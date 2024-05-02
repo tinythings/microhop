@@ -4,8 +4,7 @@ mod rfsutils;
 use crate::rfsutils::{blk::BlkInfo, kmodprobe};
 use nix::{sys::stat, unistd};
 use profile::cfg::MhConfig;
-use serde::de;
-use std::{ffi::CString, fs, io::Error, path::Path};
+use std::{ffi::CString, io::Error, path::Path};
 use uuid::Uuid;
 
 static VERSION: &str = "0.0.3";
