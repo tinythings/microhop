@@ -13,6 +13,15 @@ pub fn clidef(version: &'static str, appname: &'static str) -> Command {
         .version(version)
         .about(format!("{} - utility for generating microhop-based initramfs", appname))
         .arg(
+            Arg::new("config")
+                .short('c')
+                .long("config")
+                .aliases(["profile"])
+                .short_alias('p')
+                .conflicts_with_all(["extract"])
+                .help("Path to the initramfs configuration (profile)"),
+        )
+        .arg(
             Arg::new("extract")
                 .short('x')
                 .long("extract")
@@ -31,7 +40,7 @@ pub fn clidef(version: &'static str, appname: &'static str) -> Command {
                 .short('r')
                 .long("root")
                 .help("Path to the root filesystem.")
-                .conflicts_with("kernel")
+                .conflicts_with_all(["kernel", "lsmod"])
                 .default_value("/"),
         )
         .arg(
@@ -40,7 +49,15 @@ pub fn clidef(version: &'static str, appname: &'static str) -> Command {
                 .long("list")
                 .action(clap::ArgAction::SetTrue)
                 .help("List available kernel versions")
-                .conflicts_with_all(["extract", "kernel", "root"]),
+                .conflicts_with_all(["extract", "kernel", "lsmod", "config"]),
+        )
+        .arg(
+            Arg::new("lsmod")
+                .short('m')
+                .long("lsmod")
+                .action(clap::ArgAction::SetTrue)
+                .help("Just a fancy lsmod")
+                .conflicts_with_all(["extract", "kernel", "config"]),
         )
         .arg(
             Arg::new("output")

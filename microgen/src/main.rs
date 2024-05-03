@@ -19,11 +19,10 @@ fn main() -> Result<(), Error> {
         };
     }
 
-    profile::add(1, 2);
-
     let params = cli.to_owned().get_matches();
     let x_mods: Vec<String> = params.get_many::<String>("extract").unwrap_or_default().map(|s| s.to_string()).collect();
-    let k_info = kmoddep::get_kernel_infos(params.get_one::<String>("root").unwrap());
+    let k_info = kmoddep::get_kernel_infos(Some(params.get_one::<String>("root").unwrap()));
+    let profile = params.get_one::<String>("config");
     if let Err(k_info) = k_info {
         println!("Error: {}", k_info);
         return Ok(());
@@ -37,6 +36,7 @@ fn main() -> Result<(), Error> {
                 i.get_kernel_path().file_name().unwrap_or_default().to_str().unwrap_or_default().bright_yellow().bold()
             );
         }
+    } else if params.get_flag("lsmod") {
         println!("\n{:<30} {:<10} {}", "Name".bright_yellow(), "Size".bright_yellow(), "Used by".bright_yellow());
         for m in lsmod() {
             println!(
@@ -55,6 +55,9 @@ fn main() -> Result<(), Error> {
                 println!("{:?}", knfo.get_deps_for(&x_mods.iter().map(|x| x.to_string()).collect::<Vec<String>>()));
             }
         }
+    } else if let Some(profile) = profile {
+        let cfg = profile::cfg::get_mh_config(Some(profile))?;
+        println!("{:?}", cfg.get_modules());
     }
 
     Ok(())
