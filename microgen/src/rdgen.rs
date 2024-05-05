@@ -1,13 +1,11 @@
-use std::{
-    fs,
-    io::{Error, ErrorKind::InvalidData},
-    os::unix::fs::PermissionsExt,
-    path::PathBuf,
-};
-
 use kmoddep::kerman::KernelInfo;
-use nix::NixPath;
 use profile::cfg::MhConfig;
+use std::{
+    env, fs,
+    io::{Error, ErrorKind::InvalidData},
+    os::unix::fs::{symlink, PermissionsExt},
+    path::{Path, PathBuf},
+};
 
 const MICROHOP: &[u8] = include_bytes!("microhop");
 
@@ -53,6 +51,12 @@ impl IrfsGen {
         let mut flags = fs::metadata(&mhp)?.permissions();
         flags.set_mode(0o755);
         fs::set_permissions(mhp, flags)?;
+
+        // Symlink to /init
+        let here = env::current_dir()?;
+        env::set_current_dir(self.dst.as_path())?;
+        symlink(Path::new("bin/microhop"), Path::new("init"))?;
+        env::set_current_dir(here)?;
 
         Ok(())
     }
