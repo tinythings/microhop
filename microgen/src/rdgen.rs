@@ -6,6 +6,7 @@ use std::{
     io::{BufWriter, Error, ErrorKind::InvalidData, Write},
     os::unix::fs::{symlink, PermissionsExt},
     path::{Path, PathBuf},
+    process::Command,
 };
 
 const MICROHOP: &[u8] = include_bytes!("microhop");
@@ -30,6 +31,9 @@ pub struct IrfsGen {
     /// Destination where initramfs is going to be generated
     dst: PathBuf,
 
+    /// Output filename path
+    dst_fn: PathBuf,
+
     /// Module dependencies
     _kmod_d: Vec<String>,
 
@@ -38,19 +42,20 @@ pub struct IrfsGen {
 }
 
 impl IrfsGen {
-    pub fn generate(kinfo: &KernelInfo, cfg: MhConfig, dst: PathBuf) -> Result<(), Error> {
+    pub fn generate(kinfo: &KernelInfo, cfg: MhConfig, dst: PathBuf, fname: PathBuf) -> Result<(), Error> {
         if !dst.exists() {
             fs::create_dir_all(&dst)?;
         } else {
             return Err(Error::new(InvalidData, format!("Given destination path {:?} already exists", dst)));
         }
 
-        let mut irfsg = IrfsGen { kinfo: kinfo.to_owned(), cfg, dst, _kmod_d: vec![], _kmod_m: vec![] };
+        let mut irfsg = IrfsGen { kinfo: kinfo.to_owned(), cfg, dst, dst_fn: fname, _kmod_d: vec![], _kmod_m: vec![] };
 
         let kroot = irfsg.create_ramfs_dirs()?;
         irfsg.setup_microhop()?;
         irfsg.copy_kernel_modules(kroot.as_str())?;
         irfsg.write_boot_config()?;
+        irfsg.pack()?;
 
         Ok(())
     }
@@ -105,8 +110,6 @@ impl IrfsGen {
         fs::create_dir_all(mdst.as_path().parent().unwrap())?;
         fs::copy(&msrc, &mdst)?;
 
-        println!("Copy from {:?}  ->  {:?}", msrc, mdst);
-
         Ok(())
     }
 
@@ -154,6 +157,25 @@ impl IrfsGen {
         Ok(())
     }
 
+    /// Pack to the CPIO
+    fn pack(&self) -> Result<(), Error> {
+        let here = env::current_dir()?;
+        env::set_current_dir(self.dst.as_path())?;
+
+        println!("Writing the initrd to {:?}", self.dst_fn.as_os_str());
+        let mut x = Command::new("/usr/bin/bash");
+        let x = x
+            .arg("-c")
+            .arg(format!(
+                "find . -print0 | cpio --null -ov --format=newc | zstd > ../{}",
+                self.dst_fn.as_os_str().to_str().unwrap()
+            ))
+            .output()?;
+
+        env::set_current_dir(here)?;
+        fs::remove_dir_all(&self.dst)?;
+
+        println!("Done");
         Ok(())
     }
 }

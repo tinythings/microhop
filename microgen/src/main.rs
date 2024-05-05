@@ -69,7 +69,12 @@ fn main() -> Result<(), Error> {
                 kfo = k_info[0].to_owned();
             }
             println!("Generating");
-            IrfsGen::generate(&kfo, cfg, PathBuf::from("./build"))?;
+            IrfsGen::generate(
+                &kfo,
+                cfg,
+                PathBuf::from(params.get_one::<String>("output").unwrap()),
+                PathBuf::from(params.get_one::<String>("file").unwrap()),
+            )?;
         }
     }
 
