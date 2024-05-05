@@ -1,9 +1,11 @@
 mod clidef;
+mod rdgen;
 
 use clap::Error;
 use colored::Colorize;
-use kmoddep::modinfo::lsmod;
-use std::env;
+use kmoddep::{kerman::KernelInfo, modinfo::lsmod};
+use rdgen::IrfsGen;
+use std::{env, path::PathBuf};
 
 static VERSION: &str = "0.0.1";
 static APPNAME: &str = "microgen";
@@ -57,7 +59,18 @@ fn main() -> Result<(), Error> {
         }
     } else if let Some(profile) = profile {
         let cfg = profile::cfg::get_mh_config(Some(profile))?;
-        println!("{:?}", cfg.get_modules());
+        if let Ok(k_info) = k_info {
+            let kfo: KernelInfo;
+
+            // Rewrite this better
+            if k_info.len() > 1 {
+                panic!("Need to implement matching a proper kernel from CLI")
+            } else {
+                kfo = k_info[0].to_owned();
+            }
+            println!("Generating");
+            IrfsGen::generate(&kfo, cfg, PathBuf::from("./build"))?;
+        }
     }
 
     Ok(())
