@@ -80,7 +80,7 @@ impl IrfsGen {
     /// Create directories for the ramfs.
     fn create_ramfs_dirs(&self) -> Result<String, Error> {
         let kroot = format!("lib/modules/{}", self.kinfo.get_kernel_path().as_path().file_name().unwrap().to_str().unwrap());
-        for d in ["bin", "etc", "proc", "dev", "sys", self.cfg.get_sysroot_path().trim_start_matches("/"), kroot.as_str()] {
+        for d in ["bin", "etc", "proc", "dev", "sys", self.cfg.get_sysroot_path().trim_start_matches('/'), kroot.as_str()] {
             fs::create_dir_all(self.dst.join(d.trim_start_matches('/')))?;
         }
         Ok(kroot)
@@ -108,7 +108,7 @@ impl IrfsGen {
         let mdst = self.dst.join(kroot).join(kmod);
 
         fs::create_dir_all(mdst.as_path().parent().unwrap())?;
-        fs::copy(&msrc, &mdst)?;
+        fs::copy(msrc, mdst)?;
 
         Ok(())
     }
@@ -132,7 +132,7 @@ impl IrfsGen {
                 .chain(self._kmod_m.iter())
                 .map(|i| format!(
                     "  - {}",
-                    Path::new(i).file_stem().unwrap().to_str().unwrap().to_string().split_once('.').unwrap().0.to_string()
+                    Path::new(i).file_stem().unwrap().to_str().unwrap().to_string().split_once('.').unwrap().0
                 ))
                 .collect::<Vec<String>>()
                 .join("\n")
@@ -163,9 +163,8 @@ impl IrfsGen {
         env::set_current_dir(self.dst.as_path())?;
 
         println!("Writing the initrd to {:?}", self.dst_fn.as_os_str());
-        let mut x = Command::new("/usr/bin/bash");
-        let x = x
-            .arg("-c")
+        let mut p = Command::new("/usr/bin/bash");
+        p.arg("-c")
             .arg(format!(
                 "find . -print0 | cpio --null -ov --format=newc | zstd > ../{}",
                 self.dst_fn.as_os_str().to_str().unwrap()
