@@ -9,6 +9,16 @@ use std::{
 
 const MICROHOP: &[u8] = include_bytes!("microhop");
 
+const BLINKENLICHTEN: &str = "# Achtung Alles Lookenskepers!
+#
+# Das konfiguration ist nicht fuer gefingerpoken und
+# mittengrabben. Ist easy das machine schnappen der springenwerk,
+# blowenfusen und poppencorken mit spitzensparken. Das rubbernecken
+# sichtseeren keepen das cotten-pickenen hands in das pockets
+# muss.
+#
+# Relaxen und watchen das blinkenlichten.";
+
 pub struct IrfsGen {
     /// Target kernel
     kinfo: KernelInfo,
@@ -99,6 +109,9 @@ impl IrfsGen {
 
     /// Write boot config
     fn write_boot_config(&self) -> Result<(), Error> {
+
+        // Blinkenlichten :)
+        writeln!(fp, "{}\n", BLINKENLICHTEN)?;
         Ok(())
     }
 }
