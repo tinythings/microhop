@@ -36,7 +36,6 @@ build-release:
 	cp target/x86_64-unknown-linux-gnu/release/microhop microgen/src
 
 	@printf "Building Microgen\n"
-	@ls -lah microgen/src
 	@$(MAKE) microgen-release
 	@$(MAKE) _reset_placeholder
 
