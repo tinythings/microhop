@@ -7,28 +7,26 @@ omitting many generic moving parts.
 
 # Usage
 
-**Microhop** consists of two binaries and one configuration file:
-  1. `microhop` — should be compiled static
-  2. `microgen` — dynamic utility on the host system
-  3. `/etc/microhop.conf` — main system boot configuration
+**Microhop** when deployed consists of one binary utility and one configuration file:
+  1. `microgen` — dynamic utility on the host system
+  2. `/etc/microhop.conf` — main system boot configuration
 
-The `microhop` binary is the very `/init` in the `initramfs`,
+The resulting `microhop` binary is the very `/init` in the `initramfs`,
 containing all required functionality, such as mounting, block device
-detection, root switching etc.
+detection, root switching etc. It will appear only inside the `initramfs` CPIO archive
+and is not intended to use elsewhere.
 
-The `microgen` binary is the utility to generate the `initramfs`
-archive, which will be included into the `/boot` directory of the
-Linux image.
+The `microgen` binary is the utility which is generating the `initramfs` archive.
+This archive then you will copy into the `/boot` directory of your Linux image.
 
 ## Configuration
+
+Configuration is also a profile. This is the basic start:
 
 ```yaml
 # The list of kernel modules
 modules:
   - virtio_blk
-  - jbd2
-  - crc16
-  - mbcache
   - ext4
 
 # Devices
@@ -50,3 +48,33 @@ sysroot: /sysroot
 # - quiet (errors only)
 log: debug
 ```
+
+Resulting configuration will just contain more modules (their dependencies). The rest will be passed through.
+
+## Generating initramfs
+
+Essentially, the workflow is very simple:
+
+1. Point which kernel you want to use and where it is
+2. "Press pedal" to get a new `initramfs`
+
+To achieve the effect, do the following:
+
+1. Mount your root filesystem, which you want to update with the new `initramfs`. For example:
+   ```shell
+   sudo mount /dev/loop1p3 /mnt
+   ```
+
+2. Let `microgen` generate it _(NOTE: this is an example, your filenames may differ)_:
+
+   ```shell
+   sudo microgen --root /mnt --config microhop.conf --file /mnt/boot/initrd-5.14.21-default
+   ```
+
+3. Un-mount your image:
+
+   ```shell
+   sudo umount /mnt
+   ```
+
+That's basically it. 😉
