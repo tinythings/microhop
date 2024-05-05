@@ -1,8 +1,9 @@
 use kmoddep::kerman::KernelInfo;
 use profile::cfg::MhConfig;
 use std::{
-    env, fs,
-    io::{Error, ErrorKind::InvalidData},
+    env,
+    fs::{self, File},
+    io::{BufWriter, Error, ErrorKind::InvalidData, Write},
     os::unix::fs::{symlink, PermissionsExt},
     path::{Path, PathBuf},
 };
@@ -44,7 +45,7 @@ impl IrfsGen {
             return Err(Error::new(InvalidData, format!("Given destination path {:?} already exists", dst)));
         }
 
-        let irfsg = IrfsGen { kinfo: kinfo.to_owned(), cfg, dst, _kmod_d: vec![], _kmod_m: vec![] };
+        let mut irfsg = IrfsGen { kinfo: kinfo.to_owned(), cfg, dst, _kmod_d: vec![], _kmod_m: vec![] };
 
         let kroot = irfsg.create_ramfs_dirs()?;
         irfsg.setup_microhop()?;
@@ -74,20 +75,22 @@ impl IrfsGen {
     /// Create directories for the ramfs.
     fn create_ramfs_dirs(&self) -> Result<String, Error> {
         let kroot = format!("lib/modules/{}", self.kinfo.get_kernel_path().as_path().file_name().unwrap().to_str().unwrap());
-        for d in ["bin", "etc", kroot.as_str()] {
-            fs::create_dir_all(self.dst.join(d.trim_start_matches("/")))?;
+        for d in ["bin", "etc", "proc", "dev", "sys", self.cfg.get_sysroot_path().trim_start_matches("/"), kroot.as_str()] {
+            fs::create_dir_all(self.dst.join(d.trim_start_matches('/')))?;
         }
         Ok(kroot)
     }
 
     /// This will find what modules are needed in the source kernel and will copy to the target only those
-    fn copy_kernel_modules(&self, kroot: &str) -> Result<(), Error> {
+    fn copy_kernel_modules(&mut self, kroot: &str) -> Result<(), Error> {
         let dtree = self.kinfo.get_deps_for(self.cfg.get_modules());
         for (kmod, kmod_deps) in dtree {
             self._copy_kmod(&kmod, kroot)?;
+            self._kmod_m.push(kmod);
             if !kmod_deps.is_empty() {
                 for kd in kmod_deps {
                     self._copy_kmod(kd.as_str(), kroot)?;
+                    self._kmod_d.push(kd);
                 }
             }
         }
@@ -109,9 +112,48 @@ impl IrfsGen {
 
     /// Write boot config
     fn write_boot_config(&self) -> Result<(), Error> {
+        let f = File::create(self.dst.join("etc/microhop.conf"))?;
+        let mut fp = BufWriter::new(f);
 
         // Blinkenlichten :)
         writeln!(fp, "{}\n", BLINKENLICHTEN)?;
+
+        // Write modules in the following order:
+        //   1. First dependencies
+        //   2. Main modules
+        writeln!(
+            fp,
+            "modules:\n{}\n",
+            self._kmod_d
+                .iter()
+                .chain(self._kmod_m.iter())
+                .map(|i| format!(
+                    "  - {}",
+                    Path::new(i).file_stem().unwrap().to_str().unwrap().to_string().split_once('.').unwrap().0.to_string()
+                ))
+                .collect::<Vec<String>>()
+                .join("\n")
+        )?;
+
+        // Write disks configuration
+        writeln!(fp, "disks:")?;
+        for d in self.cfg.get_disks()? {
+            writeln!(fp, "  {}: {},{},{}", d.get_device(), d.get_fstype(), d.get_mountpoint(), d.get_mode())?;
+        }
+        writeln!(fp)?;
+
+        // Transfer other options
+        writeln!(fp, "init: {}", self.cfg.get_init_path())?;
+        writeln!(fp, "sysroot: {}", self.cfg.get_sysroot_path())?;
+
+        if let Some(l) = self.cfg.get_log_level_as_str() {
+            writeln!(fp, "log: {}", l)?;
+        }
+
+        fp.flush()?;
+        Ok(())
+    }
+
         Ok(())
     }
 }
