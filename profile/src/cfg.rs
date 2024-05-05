@@ -108,6 +108,10 @@ impl MhConfig {
         log::LevelFilter::Info
     }
 
+    pub fn get_log_level_as_str(&self) -> &Option<String> {
+        &self.log
+    }
+
     /// Get a sysroot temp path
     pub fn get_sysroot_path(&self) -> String {
         self.sysroot.to_owned().unwrap_or("/sysroot".to_string())
