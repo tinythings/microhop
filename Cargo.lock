@@ -419,6 +419,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e7ff3fe46d8e76465cea23673f8b2e031039f1cd33801e688aa2562ae0cbb61"
 
 [[package]]
+name = "kmoddep"
+version = "0.1.3"
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -515,7 +519,7 @@ version = "0.0.4"
 dependencies = [
  "clap",
  "colored",
- "kmoddep",
+ "kmoddep 0.1.3",
  "nix",
  "profile",
 ]
@@ -527,7 +531,7 @@ dependencies = [
  "chrono",
  "colored",
  "indexmap",
- "kmoddep",
+ "kmoddep 0.1.2",
  "lazy_static",
  "libblkid-rs",
  "log",
