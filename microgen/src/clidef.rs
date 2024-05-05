@@ -66,6 +66,7 @@ pub fn clidef(version: &'static str, appname: &'static str) -> Command {
                 .help("Set output directory for the initramfs build")
                 .default_value("./build"),
         )
+        .arg(Arg::new("file").short('f').long("file").help("Output file.").default_value("./initramfs-microhop.zst"))
         .disable_version_flag(true)
         .disable_colored_help(false)
         .styles(styles)
