@@ -5,7 +5,9 @@ small, tiny and completely stripped from everything. This is what
 `microhop` is for: use mainline Linux Kernel straight to the point,
 omitting many generic moving parts.
 
-# Usage
+# Tutorial
+
+### Overview
 
 **Microhop** when deployed consists of one binary utility and one configuration file:
   1. `microgen` — dynamic utility on the host system
@@ -19,7 +21,15 @@ and is not intended to use elsewhere.
 The `microgen` binary is the utility which is generating the `initramfs` archive.
 This archive then you will copy into the `/boot` directory of your Linux image.
 
-## Configuration
+### Building
+
+Clone this repository and run:
+
+	make build-release
+
+In `./target/release` you should have a binary, called `microgen`. This is all you need.
+
+### Configuration
 
 Configuration is also a profile. This is the basic start:
 
@@ -51,7 +61,7 @@ log: debug
 
 Resulting configuration will just contain more modules (their dependencies). The rest will be passed through.
 
-## Generating initramfs
+### Generating initramfs
 
 Essentially, the workflow is very simple:
 
