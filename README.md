@@ -29,6 +29,8 @@ Clone this repository and run:
 
 In `./target/release` you should have a binary, called `microgen`. This is all you need.
 
+> NOTE: You might need to adjust your setup. For example, on Debian you would need to install `libclang-dev` and `libblkid-dev` packages.
+
 ### Configuration
 
 Configuration is also a profile. This is the basic start:
