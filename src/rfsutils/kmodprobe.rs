@@ -28,14 +28,13 @@ impl KModProbe {
         } else {
             self.km_path.join(name)
         };
+
         if mp.file_name().unwrap().to_string_lossy().ends_with(".zst") {
             kmod::init_module(&self.unzstd(mp).unwrap(), &CString::new("").unwrap()).unwrap();
+        } else if mp.exists() {
+            kmod::finit_module(File::open(mp).unwrap(), &CString::new("").unwrap(), ModuleInitFlags::empty()).unwrap();
         } else {
-            if mp.exists() {
-                kmod::finit_module(File::open(mp).unwrap(), &CString::new("").unwrap(), ModuleInitFlags::empty()).unwrap();
-            } else {
-                log::error!("Kernel module {} not found", mp.as_os_str().to_str().unwrap());
-            }
+            log::error!("Kernel module {} not found", mp.as_os_str().to_str().unwrap());
         }
     }
 

@@ -4,7 +4,7 @@ use profile::cfg::MhConfig;
 use std::io::Error;
 use uuid::Uuid;
 
-static VERSION: &str = "0.0.5";
+static VERSION: &str = "0.0.6";
 
 // Mount required system dirs
 lazy_static! {
@@ -59,7 +59,7 @@ pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<(String, String, S
 
     for d in blkid.get_devices() {
         if !d.get_fstype().is_empty() {
-            log::info!("{} partition at {:?} ({}) label={}", d.get_fstype(), d.get_path(), d.get_uuid(), d.get_label());
+            log::info!("{} partition at {:?} ({}) \"{}\"", d.get_fstype(), d.get_path(), d.get_uuid(), d.get_label());
         }
     }
 
@@ -75,10 +75,20 @@ pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<(String, String, S
             if let Some(blkdev) = blkid.by_uuid(dev.get_device()) {
                 devpath = blkdev.get_path().to_str().unwrap();
             }
-        } else {
+        } else if dev.get_device().starts_with("/dev") {
             devpath = dev.get_device();
+        } else {
+            // label
+            if let Some(blkdev) = blkid.by_label(dev.get_device()) {
+                devpath = blkdev.get_path().to_str().unwrap();
+            }
         }
-        blk_mpt.push((dev.get_fstype().into(), devpath.into(), format!("{}{}", &cfg.get_sysroot_path(), mpt)));
+
+        if devpath.is_empty() {
+            log::warn!("Unknown device: {}", dev.get_device());
+        } else {
+            blk_mpt.push((dev.get_fstype().into(), devpath.into(), format!("{}{}", &cfg.get_sysroot_path(), mpt)));
+        }
     }
 
     // Sort mountpoints, so the "/" goes always first

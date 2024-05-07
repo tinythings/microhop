@@ -1,5 +1,5 @@
 [bumpver]
-current_version = "0.0.5"
+current_version = "0.0.6"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "Release to version {new_version}"
 tag_message = "{new_version}"
@@ -7,7 +7,7 @@ tag_scope = "default"
 pre_commit_hook = ""
 post_commit_hook = ""
 commit = true
-tag = true
+tag = false
 push = true
 
 [bumpver.file_patterns]
