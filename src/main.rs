@@ -6,7 +6,7 @@ use crate::{
     microhop::{get_blk_devices, greet, mount_fs, SYS_MPT},
     rfsutils::kmodprobe,
 };
-use nix::{sys::stat, unistd};
+use nix::{mount::MsFlags, sys::stat, unistd};
 use std::{ffi::CString, io::Error, path::Path};
 
 static LOGGER: logger::STDOUTLogger = logger::STDOUTLogger;
@@ -45,15 +45,18 @@ fn main() -> Result<(), Error> {
     // Remount sysfs, switch root
     log::debug!("switching root");
     for t in &*SYS_MPT {
-        rfsutils::fs::umount(&t.2)?;
-        rfsutils::fs::mount(&t.0, &t.1, format!("{}{}", temp_mpt, t.2).as_str())?;
+        let tgt = format!("{}{}", temp_mpt, t.2);
+        nix::mount::mount(Some(t.2.as_str()), tgt.as_str(), Some(t.0.as_str()), MsFlags::MS_MOVE, Option::<&str>::None)?;
     }
 
+    // Pivot the system
     rfsutils::fs::pivot(temp_mpt, root_fstype.as_str())?;
 
     // Start external init
-    log::debug!("launching configured init");
-    unistd::execv(&CString::new(cfg.get_init_path()).unwrap(), &Vec::<CString>::default())?;
+    log::info!("Launching init at {}", cfg.get_init_path());
+    if let Err(x) = unistd::execv(&CString::new(cfg.get_init_path()).unwrap(), &Vec::<CString>::default()) {
+        log::error!("{:?}", x);
+    }
 
     Ok(())
 }
