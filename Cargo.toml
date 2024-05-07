@@ -55,7 +55,6 @@ nix = { version = "0.28.0", features = [
 ] }
 serde = { version = "1.0.198", features = ["derive"] }
 serde_yaml = "0.9.34"
-sys-mount = "3.0.1"
 uname = "0.1.1"
 walkdir = "2.5.0"
 zstd = "0.13.1"
