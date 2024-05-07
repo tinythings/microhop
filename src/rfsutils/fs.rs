@@ -13,9 +13,8 @@ fn fs_type(p: &str) -> Result<u64, Error> {
 }
 
 /// Recursively removes everything from the ramfs
-fn rmrf() -> Result<(), Error> {
-    fn is_sys(e: &str) -> bool {
-        let sr = "/sysroot";
+fn rmrf(sr: &str) -> Result<(), Error> {
+    fn is_sys(e: &str, sr: &str) -> bool {
         for d in ["/proc", "/sys", "/dev", sr] {
             if e != "/"
                 || e.starts_with(d)
@@ -32,7 +31,7 @@ fn rmrf() -> Result<(), Error> {
     WalkDir::new("/").into_iter().flat_map(|r| r.ok()).for_each(|e| {
         let p = e.path().as_os_str().to_str().unwrap_or_default();
         if let Ok(fst) = fs_type(p) {
-            if fst == 0 && !is_sys(p) && e.path().is_dir() {
+            if fst == 0 && !is_sys(p, sr) && e.path().is_dir() && p != "/" {
                 fs::remove_dir_all(e.path()).unwrap_or_default();
             }
         }
@@ -61,7 +60,7 @@ pub fn umount(dst: &str) -> Result<(), Error> {
 
 /// Switches root
 pub fn pivot(temp: &str, fstype: &str) -> Result<(), Error> {
-    rmrf()?;
+    rmrf(temp)?;
     log::debug!("Cleanup ramfs");
 
     unistd::chdir(temp)?;
