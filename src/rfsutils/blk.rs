@@ -111,12 +111,17 @@ impl BlkInfo {
 
     /// Resolve device by UUID
     pub fn by_uuid(&self, id: &str) -> Option<&BlkDev> {
-        self.devices.iter().find(|&d| d.uuid.eq(id))
+        self.devices.iter().find(|&d| d.get_uuid().eq(id))
     }
 
     /// Resolve device by /dev/<device> path
     pub fn by_path(&self, p: &str) -> Option<&BlkDev> {
-        self.devices.iter().find(|&d| d.path.eq(&PathBuf::from(p)))
+        self.devices.iter().find(|&d| d.get_path().eq(&PathBuf::from(p)))
+    }
+
+    /// Resolve device by label path
+    pub fn by_label(&self, lbl: &str) -> Option<&BlkDev> {
+        self.devices.iter().find(|&d| d.get_label().eq(lbl))
     }
 
     /// Return all known block devices
