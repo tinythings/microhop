@@ -62,12 +62,12 @@ pub fn umount(dst: &str) -> Result<(), Error> {
 /// Switches root
 pub fn pivot(temp: &str, fstype: &str) -> Result<(), Error> {
     rmrf()?;
-    log::debug!("free ramfs");
+    log::debug!("Cleanup ramfs");
 
     unistd::chdir(temp)?;
     nix::mount::mount(Some("."), "/", Some(fstype), MsFlags::MS_MOVE, Option::<&str>::None)?;
     unistd::chroot(".")?;
-    log::debug!("enter the rootfs");
+    log::debug!("Enter the rootfs");
 
     Ok(())
 }
