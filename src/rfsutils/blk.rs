@@ -10,6 +10,7 @@ use std::{
 pub struct BlkDev {
     path: PathBuf,
     uuid: String,
+    label: String,
     fstype: String,
 }
 
@@ -24,6 +25,10 @@ impl BlkDev {
 
     pub fn get_fstype(&self) -> &str {
         &self.fstype
+    }
+
+    pub fn get_label(&self) -> &str {
+        &self.label
     }
 }
 
@@ -61,16 +66,17 @@ impl BlkInfo {
             if devname.starts_with(dev) && !devname.eq(dev) {
                 let dev = format!("/dev/{}", devname);
                 let blkid = self.blk_id(dev.as_str())?; // uuid, fstype
-                self.devices.push(BlkDev { path: PathBuf::from(dev), uuid: blkid.0, fstype: blkid.1 });
+                self.devices.push(BlkDev { path: PathBuf::from(dev), uuid: blkid.0, label: blkid.1, fstype: blkid.2 });
             }
         }
 
         Ok(())
     }
 
-    fn blk_id(&self, dev: &str) -> Result<(String, String), Error> {
+    fn blk_id(&self, dev: &str) -> Result<(String, String, String), Error> {
         let mut uuid = "".to_string();
         let mut fstype = "".to_string();
+        let mut label = "".to_string();
 
         if let Ok(mut pb) = BlkidProbe::new_from_filename(Path::new(dev)) {
             pb.enable_superblocks(true).unwrap_or_default();
@@ -84,9 +90,13 @@ impl BlkInfo {
             if let Ok(disk_fst) = pb.lookup_value("TYPE") {
                 fstype = disk_fst;
             }
+
+            if let Ok(disk_lbl) = pb.lookup_value("LABEL") {
+                label = disk_lbl;
+            }
         }
 
-        Ok((uuid, fstype))
+        Ok((uuid, label, fstype))
     }
 
     /// Find all currently available devices

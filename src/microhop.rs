@@ -59,7 +59,7 @@ pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<(String, String, S
 
     for d in blkid.get_devices() {
         if !d.get_fstype().is_empty() {
-            log::info!("{} partition at {:?} ({})", d.get_fstype(), d.get_path(), d.get_uuid());
+            log::info!("{} partition at {:?} ({}) label={}", d.get_fstype(), d.get_path(), d.get_uuid(), d.get_label());
         }
     }
 
