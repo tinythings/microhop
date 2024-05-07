@@ -1,11 +1,13 @@
 .DEFAULT_GOAL := build
 .PHONY:build microhop-release-static microhop-debug-static microgen-release microgen-debug _reset_placeholder
 
+ARCH := $(shell uname -p)
+
 microhop-release-static:
-	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target x86_64-unknown-linux-gnu --release
+	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target $(ARCH)-unknown-linux-gnu --release
 
 microhop-debug-static:
-	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target x86_64-unknown-linux-gnu
+	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target $(ARCH)-unknown-linux-gnu
 
 microgen-release:
 	cargo build -p microgen --release
@@ -21,7 +23,7 @@ build-debug:
 	@printf "Building Microhop (debug)\n"
 	@$(MAKE) microhop-debug-static
 
-	cp target/x86_64-unknown-linux-gnu/debug/microhop microgen/src
+	cp target/$(ARCH)-unknown-linux-gnu/debug/microhop microgen/src
 
 	@printf "Building Microgen\n"
 	@$(MAKE) microgen-debug
@@ -33,7 +35,7 @@ build-release:
 	@printf "Building Microhop (release)\n"
 	@$(MAKE) microhop-release-static
 
-	cp target/x86_64-unknown-linux-gnu/release/microhop microgen/src
+	cp target/$(ARCH)-unknown-linux-gnu/release/microhop microgen/src
 
 	@printf "Building Microgen\n"
 	@$(MAKE) microgen-release
