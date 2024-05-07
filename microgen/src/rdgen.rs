@@ -130,10 +130,7 @@ impl IrfsGen {
             self._kmod_d
                 .iter()
                 .chain(self._kmod_m.iter())
-                .map(|i| format!(
-                    "  - {}",
-                    Path::new(i).file_stem().unwrap().to_str().unwrap().to_string().split('.').next().unwrap()
-                ))
+                .map(|i| format!("  - {}", Path::new(i).file_stem().unwrap().to_str().unwrap().split('.').next().unwrap()))
                 .collect::<Vec<String>>()
                 .join("\n")
         )?;
