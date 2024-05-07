@@ -1,6 +1,5 @@
 use nix::{mount::MsFlags, sys::statvfs, unistd};
 use std::{fs, io::Error};
-use sys_mount::Mount;
 use walkdir::WalkDir;
 
 /// Utilities for the root filesystem operations.
@@ -43,7 +42,7 @@ fn rmrf() -> Result<(), Error> {
 
 /// Mounts mountpoint
 pub fn mount(fstype: &str, dev: &str, dst: &str) -> Result<(), Error> {
-    if let Err(err) = Mount::builder().fstype(fstype).mount(dev, dst) {
+    if let Err(err) = nix::mount::mount(Some(dev), dst, Some(fstype), MsFlags::MS_NOATIME, Option::<&str>::None) {
         return Err(Error::new(
             std::io::ErrorKind::NotConnected,
             format!("Failed to mount {} on {} as {}: {}", fstype, dev, dst, err),
