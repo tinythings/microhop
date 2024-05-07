@@ -54,6 +54,7 @@ pub fn mount(fstype: &str, dev: &str, dst: &str) -> Result<(), Error> {
 }
 
 /// Un-mount a mountpoint.
+#[allow(dead_code)]
 pub fn umount(dst: &str) -> Result<(), Error> {
     Ok(nix::mount::umount(dst)?)
 }
@@ -64,7 +65,7 @@ pub fn pivot(temp: &str, fstype: &str) -> Result<(), Error> {
     log::debug!("Cleanup ramfs");
 
     unistd::chdir(temp)?;
-    nix::mount::mount(Some("."), "/", Some(fstype), MsFlags::MS_MOVE, Option::<&str>::None)?;
+    nix::mount::mount(Some(temp), "/", Some(fstype), MsFlags::MS_MOVE, Option::<&str>::None)?;
     unistd::chroot(".")?;
     log::debug!("Enter the rootfs");
 
