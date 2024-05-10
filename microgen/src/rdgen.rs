@@ -10,7 +10,6 @@ use std::{
 };
 
 const MICROHOP: &[u8] = include_bytes!("microhop");
-
 const BLINKENLICHTEN: &str = "# Achtung Alles Lookenskepers!
 #
 # Das konfiguration ist nicht fuer gefingerpoken und
