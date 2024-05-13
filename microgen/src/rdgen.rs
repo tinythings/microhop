@@ -6,8 +6,9 @@ use std::{
     io::{BufWriter, Error, ErrorKind::InvalidData, Write},
     os::unix::fs::{symlink, PermissionsExt},
     path::{Path, PathBuf},
-    process::Command,
 };
+
+use crate::rdpack;
 
 const MICROHOP: &[u8] = include_bytes!("microhop");
 const BLINKENLICHTEN: &str = "# Achtung Alles Lookenskepers!
@@ -158,14 +159,9 @@ impl IrfsGen {
         let here = env::current_dir()?;
         env::set_current_dir(self.dst.as_path())?;
 
-        println!("Writing the initrd to {:?}", self.dst_fn.as_os_str());
-        let mut p = Command::new("/usr/bin/bash");
-        p.arg("-c")
-            .arg(format!(
-                "find . -print0 | cpio --null -ov --format=newc | zstd > ../{}",
-                self.dst_fn.as_os_str().to_str().unwrap()
-            ))
-            .output()?;
+        let out = self.dst_fn.as_os_str().to_str().unwrap();
+        println!("Writing the initramfs to {:?}", out);
+        rdpack::pack(out)?;
 
         env::set_current_dir(here)?;
         fs::remove_dir_all(&self.dst)?;
