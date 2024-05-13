@@ -1,5 +1,6 @@
 mod clidef;
 mod rdgen;
+mod rdpack;
 
 use clap::Error;
 use colored::Colorize;
