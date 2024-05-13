@@ -38,35 +38,22 @@ impl InitRamfsPacker {
         let mut data: Vec<u8> = vec![];
 
         let f_meta = fs::metadata(&pth).unwrap();
-        let arc_meta;
+        let mut arc_meta = NewcBuilder::new(p).ino(inode).uid(0).gid(f_meta.gid()).mode(f_meta.permissions().mode());
+
         if pth.is_symlink() {
             data.extend(fs::read_link(pth).unwrap().to_str().unwrap().as_bytes());
-            arc_meta = NewcBuilder::new(p)
-                .ino(inode)
-                .uid(0)
-                .gid(f_meta.gid())
-                .mode(f_meta.permissions().mode())
-                .set_mode_file_type(cpio::newc::ModeFileType::Symlink);
+            arc_meta = arc_meta.set_mode_file_type(cpio::newc::ModeFileType::Symlink);
         } else if pth.is_file() {
             data.extend(fs::read(&pth)?);
-            arc_meta = NewcBuilder::new(p)
-                .ino(inode)
-                .uid(0)
-                .gid(f_meta.gid())
-                .mode(f_meta.permissions().mode())
-                .set_mode_file_type(cpio::newc::ModeFileType::Regular);
+            arc_meta = arc_meta.set_mode_file_type(cpio::newc::ModeFileType::Regular);
         } else {
-            arc_meta = NewcBuilder::new(p)
-                .ino(inode)
-                .uid(0)
-                .gid(f_meta.gid())
-                .mode(f_meta.permissions().mode())
-                .set_mode_file_type(cpio::newc::ModeFileType::Directory);
+            arc_meta = arc_meta.set_mode_file_type(cpio::newc::ModeFileType::Directory);
         }
 
         Ok((arc_meta, data))
     }
 
+    /// Pack initramfs into a file
     fn pack(&mut self, output: &str) -> Result<(), Error> {
         self.get_content();
 
