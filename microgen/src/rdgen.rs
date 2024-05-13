@@ -161,7 +161,7 @@ impl IrfsGen {
 
         let out = self.dst_fn.as_os_str().to_str().unwrap();
         println!("Writing the initramfs to {:?}", out);
-        rdpack::pack(out);
+        rdpack::pack(out)?;
 
         env::set_current_dir(here)?;
         fs::remove_dir_all(&self.dst)?;

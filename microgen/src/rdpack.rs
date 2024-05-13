@@ -67,7 +67,7 @@ impl InitRamfsPacker {
         Ok((arc_meta, data))
     }
 
-    fn pack(&mut self, output: &str) {
+    fn pack(&mut self, output: &str) -> Result<(), Error> {
         self.get_content();
 
         let all_data: Vec<u8> = vec![];
@@ -78,19 +78,21 @@ impl InitRamfsPacker {
         for fp in &self.files {
             let (bdr, data) = InitRamfsPacker::file_loader(inode, fp.to_str().unwrap()).unwrap();
             let mut w = bdr.write(&mut out, data.len() as u32);
-            w.write_all(&data);
+            w.write_all(&data)?;
             w.finish().unwrap();
             inode += 1;
         }
 
         let out = trailer(out).unwrap();
         let mut encoder = Encoder::new(File::create(format!("../{}", output)).unwrap(), 10).unwrap();
-        encoder.write_all(&out.into_inner().unwrap().into_inner());
-        encoder.finish();
+        encoder.write_all(&out.into_inner().unwrap().into_inner())?;
+        encoder.finish()?;
+
+        Ok(())
     }
 }
 
 /// Pack a content of a path into a CPIO archive
 pub fn pack(p: &str) -> Result<(), Error> {
-    Ok(InitRamfsPacker::new(".").pack(p))
+    InitRamfsPacker::new(".").pack(p)
 }
