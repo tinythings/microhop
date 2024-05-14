@@ -88,11 +88,7 @@ impl MhConfig {
 
     /// Return path to the init app
     pub fn get_init_path(&self) -> String {
-        if let Some(init) = &self.init {
-            return init.to_owned();
-        }
-
-        "/sysroot".to_string()
+        self.init.to_owned().unwrap_or("/sbin/init".to_string())
     }
 
     /// Get log level
