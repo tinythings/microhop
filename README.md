@@ -29,7 +29,21 @@ Clone this repository and run:
 
 In `./target/release` you should have a binary, called `microgen`. This is all you need.
 
-> NOTE: You might need to adjust your setup. For example, on Debian you would need to install `libclang-dev` and `libblkid-dev` packages.
+#### Note on Dependencies
+
+You might need to adjust your setup. For example, on Debian/Ubuntu you would need to
+install the following packages:
+
+- `libclang-dev`
+- `libblkid-dev`
+
+On openSUSE Leap `static-pie` linking is broken, and only `static` is available. With that in mind,
+only `"thin"` LTO for the release profile is available _(unless it was fixed)_. Additionally,
+you will need the following packages on openSUSE Leap:
+
+- `libblkid-devel-static`
+- `glibc-devel-static`
+
 
 ### Configuration
 
