@@ -95,7 +95,9 @@ impl IrfsGen {
             if !kmod_deps.is_empty() {
                 for kd in kmod_deps {
                     self._copy_kmod(kd.as_str(), kroot)?;
-                    self._kmod_d.push(kd);
+                    if !self._kmod_m.contains(&kd) {
+                        self._kmod_d.push(kd);
+                    }
                 }
             }
         }
