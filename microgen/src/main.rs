@@ -27,7 +27,7 @@ fn main() -> Result<(), Error> {
     let k_info = kmoddep::get_kernel_infos(Some(params.get_one::<String>("root").unwrap()));
     let profile = params.get_one::<String>("config");
     if let Err(k_info) = k_info {
-        println!("Error: {}", k_info);
+        println!("Unable to get the information about the kernel: {}", k_info);
         return Ok(());
     }
 
@@ -69,7 +69,7 @@ fn main() -> Result<(), Error> {
             } else {
                 kfo = k_info[0].to_owned();
             }
-            println!("Generating");
+            println!("Generating initramfs");
             IrfsGen::generate(
                 &kfo,
                 cfg,
