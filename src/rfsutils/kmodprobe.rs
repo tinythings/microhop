@@ -46,7 +46,7 @@ impl KModProbe {
         };
 
         let mps = mp.file_name().unwrap().to_string_lossy().into_owned();
-        let modname = mps.split(".").collect::<Vec<&str>>()[0];
+        let modname = mps.split('.').collect::<Vec<&str>>()[0];
 
         if mps.ends_with(".zst") {
             KModProbe::feedback(kmod::init_module(&self.unzstd(mp.clone()).unwrap(), &CString::new("").unwrap()), modname);
