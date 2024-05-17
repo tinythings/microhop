@@ -1,4 +1,7 @@
-use nix::kmod::{self, ModuleInitFlags};
+use nix::{
+    errno::Errno,
+    kmod::{self, ModuleInitFlags},
+};
 use std::{
     ffi::CString,
     fs::File,
@@ -21,6 +24,19 @@ impl KModProbe {
         KModProbe { km_path: PathBuf::from(format!("/lib/modules/{}", uname::uname().unwrap().release)) }
     }
 
+    fn feedback(e: Result<(), Errno>, name: &str) {
+        if let Err(e) = e {
+            match e {
+                Errno::EEXIST => {
+                    log::warn!("{}: already loaded", name);
+                }
+                _ => {
+                    log::error!("Error loading module: {}", e);
+                }
+            }
+        }
+    }
+
     /// Load a kernel module
     pub fn modprobe(&self, name: &str) {
         let mp: PathBuf = if !name.contains('/') || !name.contains('.') {
@@ -29,10 +45,16 @@ impl KModProbe {
             self.km_path.join(name)
         };
 
-        if mp.file_name().unwrap().to_string_lossy().ends_with(".zst") {
-            kmod::init_module(&self.unzstd(mp).unwrap(), &CString::new("").unwrap()).unwrap();
+        let mps = mp.file_name().unwrap().to_string_lossy().into_owned();
+        let modname = mps.split(".").collect::<Vec<&str>>()[0];
+
+        if mps.ends_with(".zst") {
+            KModProbe::feedback(kmod::init_module(&self.unzstd(mp.clone()).unwrap(), &CString::new("").unwrap()), modname);
         } else if mp.exists() {
-            kmod::finit_module(File::open(mp).unwrap(), &CString::new("").unwrap(), ModuleInitFlags::empty()).unwrap();
+            KModProbe::feedback(
+                kmod::finit_module(File::open(mp.clone()).unwrap(), &CString::new("").unwrap(), ModuleInitFlags::empty()),
+                modname,
+            );
         } else {
             log::error!("Kernel module {} not found", mp.as_os_str().to_str().unwrap());
         }
