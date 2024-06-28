@@ -54,8 +54,10 @@ fn main() -> Result<(), Error> {
 
     // Start external init
     log::info!("Launching init at {}", cfg.get_init_path());
-    if let Err(x) = unistd::execv(&CString::new(cfg.get_init_path()).unwrap(), &Vec::<CString>::default()) {
-        log::error!("{:?}", x);
+
+    let argv: Vec<CString> = vec![CString::new(cfg.get_init_path()).unwrap()];
+    if let Err(err) = unistd::execv(&CString::new(cfg.get_init_path()).unwrap(), &argv) {
+        log::error!("{:?}", err);
     }
 
     Ok(())
