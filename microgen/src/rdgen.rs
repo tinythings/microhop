@@ -1,6 +1,7 @@
 use kmoddep::kerman::KernelInfo;
 use profile::cfg::MhConfig;
 use std::{
+    collections::HashSet,
     env,
     fs::{self, File},
     io::{BufWriter, Error, ErrorKind::InvalidData, Write},
@@ -88,8 +89,18 @@ impl IrfsGen {
 
     /// This will find what modules are needed in the source kernel and will copy to the target only those
     fn copy_kernel_modules(&mut self, kroot: &str) -> Result<(), Error> {
-        let dtree = self.kinfo.get_deps_for(self.cfg.get_modules());
-        for (kmod, kmod_deps) in dtree {
+        // First get only main modules, and then get dependencies for them
+        for (kmod, kmod_deps) in self.kinfo.get_deps_for(
+            &self
+                .cfg
+                .get_modules()
+                .iter()
+                .filter(|e| !self.kinfo.is_dep(e))
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .cloned()
+                .collect::<Vec<String>>(),
+        ) {
             self._copy_kmod(&kmod, kroot)?;
             self._kmod_m.push(kmod);
             if !kmod_deps.is_empty() {
