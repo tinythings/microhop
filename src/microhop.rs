@@ -4,7 +4,7 @@ use profile::cfg::MhConfig;
 use std::io::Error;
 use uuid::Uuid;
 
-static VERSION: &str = "0.0.7";
+static VERSION: &str = "0.0.8";
 
 // Mount required system dirs
 lazy_static! {
