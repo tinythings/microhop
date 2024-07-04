@@ -12,6 +12,7 @@ pub fn clidef(version: &'static str, appname: &'static str) -> Command {
     Command::new(appname)
         .version(version)
         .about(format!("{} - utility for generating microhop-based initramfs", appname))
+        .arg(Arg::new("version").short('v').long("version").action(clap::ArgAction::SetTrue).help("Show version of Microhop"))
         .subcommand(
             Command::new("info")
                 .about("Information about current system")

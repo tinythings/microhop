@@ -8,7 +8,7 @@ use kmoddep::{kerman::KernelInfo, modinfo::lsmod};
 use rdgen::IrfsGen;
 use std::path::PathBuf;
 
-static VERSION: &str = "0.0.1";
+static VERSION: &str = "0.0.8";
 static APPNAME: &str = "microgen";
 
 /// Run information section
@@ -93,15 +93,20 @@ fn run_new(params: &ArgMatches) -> Result<(), Error> {
 #[allow(clippy::unit_arg)]
 fn main() -> Result<(), Error> {
     let mut cli = clidef::clidef(VERSION, APPNAME);
-    match match cli.to_owned().get_matches().subcommand() {
-        Some(("new", args)) => run_new(args),
-        Some(("analyse", args)) => run_analyse(args),
-        Some(("info", args)) => run_info(args),
-        _ => Ok(cli.print_help()?),
-    } {
-        Ok(_) => {}
-        Err(err) => {
-            println!("{}", err);
+    let params = cli.to_owned().get_matches();
+    if params.get_flag("version") {
+        println!("Version: {}", VERSION);
+    } else {
+        match match params.subcommand() {
+            Some(("new", args)) => run_new(args),
+            Some(("analyse", args)) => run_analyse(args),
+            Some(("info", args)) => run_info(args),
+            _ => Ok(cli.print_help()?),
+        } {
+            Ok(_) => {}
+            Err(err) => {
+                println!("{}", err);
+            }
         }
     }
 
