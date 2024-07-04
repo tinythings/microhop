@@ -1,5 +1,5 @@
 [bumpver]
-current_version = "0.0.8"
+current_version = "0.0.9"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "Release to version {new_version}"
 tag_message = "{new_version}"
@@ -15,3 +15,4 @@ push = true
 "profile/Cargo.toml" = ['^version = "{version}"']
 "microgen/Cargo.toml" = ['^version = "{version}"']
 "src/microhop.rs" = ['^static VERSION: &str = "{version}";']
+"microgen/src/main.rs" = ['^static VERSION: &str = "{version}";']
