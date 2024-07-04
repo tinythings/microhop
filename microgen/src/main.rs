@@ -42,6 +42,7 @@ fn run_info(params: &ArgMatches) -> Result<(), Error> {
 
 /// Run analysis and profile generator
 fn run_analyse(_params: &ArgMatches) -> Result<(), Error> {
+    println!("Not implemented yet :-(");
     Ok(())
 }
 
