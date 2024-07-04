@@ -2,38 +2,23 @@ mod clidef;
 mod rdgen;
 mod rdpack;
 
-use clap::Error;
+use clap::{ArgMatches, Error};
 use colored::Colorize;
 use kmoddep::{kerman::KernelInfo, modinfo::lsmod};
 use rdgen::IrfsGen;
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 static VERSION: &str = "0.0.1";
 static APPNAME: &str = "microgen";
 
-fn main() -> Result<(), Error> {
-    let args: Vec<String> = env::args().collect();
-    let mut cli = clidef::clidef(VERSION, APPNAME);
+/// Run information section
+fn run_info(params: &ArgMatches) -> Result<(), Error> {
+    let rfs = params.get_one::<String>("list").map(|v| v.as_str());
+    let k_info = kmoddep::get_kernel_infos(rfs)?;
 
-    if args.len() == 1 {
-        return {
-            cli.print_help().unwrap();
-            Ok(())
-        };
-    }
-
-    let params = cli.to_owned().get_matches();
-    let x_mods: Vec<String> = params.get_many::<String>("extract").unwrap_or_default().map(|s| s.to_string()).collect();
-    let k_info = kmoddep::get_kernel_infos(Some(params.get_one::<String>("root").unwrap()));
-    let profile = params.get_one::<String>("config");
-    if let Err(k_info) = k_info {
-        println!("Unable to get the information about the kernel: {}", k_info);
-        return Ok(());
-    }
-
-    if params.get_flag("list") {
+    if rfs.is_some() {
         println!("{}", "Available kernels:".bright_yellow());
-        for i in k_info.unwrap() {
+        for i in k_info {
             println!(
                 "  {}",
                 i.get_kernel_path().file_name().unwrap_or_default().to_str().unwrap_or_default().bright_yellow().bold()
@@ -50,7 +35,27 @@ fn main() -> Result<(), Error> {
                 m.dependencies.join(", ").white()
             );
         }
-    } else if !x_mods.is_empty() {
+    }
+
+    Ok(())
+}
+
+/// Run analysis and profile generator
+fn run_analyse(_params: &ArgMatches) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Create a new initramfs
+fn run_new(params: &ArgMatches) -> Result<(), Error> {
+    let x_mods: Vec<String> = params.get_many::<String>("extract").unwrap_or_default().map(|s| s.to_string()).collect();
+    let k_info = kmoddep::get_kernel_infos(Some(params.get_one::<String>("root").unwrap()));
+    let profile = params.get_one::<String>("config");
+    if let Err(k_info) = k_info {
+        println!("Unable to get the information about the kernel: {}", k_info);
+        return Ok(());
+    }
+
+    if !x_mods.is_empty() {
         let krel = params.get_one::<String>("kernel").unwrap().replace('"', "");
         for knfo in k_info.unwrap() {
             let kn = knfo.get_kernel_path().file_name().unwrap().to_str().unwrap().to_string();
@@ -76,6 +81,26 @@ fn main() -> Result<(), Error> {
                 PathBuf::from(params.get_one::<String>("output").unwrap()),
                 PathBuf::from(params.get_one::<String>("file").unwrap()),
             )?;
+        }
+    } else {
+        clidef::clidef(VERSION, APPNAME).print_help().unwrap();
+    }
+
+    Ok(())
+}
+
+#[allow(clippy::unit_arg)]
+fn main() -> Result<(), Error> {
+    let mut cli = clidef::clidef(VERSION, APPNAME);
+    match match cli.to_owned().get_matches().subcommand() {
+        Some(("new", args)) => run_new(args),
+        Some(("analyse", args)) => run_analyse(args),
+        Some(("info", args)) => run_info(args),
+        _ => Ok(cli.print_help()?),
+    } {
+        Ok(_) => {}
+        Err(err) => {
+            println!("{}", err);
         }
     }
 
