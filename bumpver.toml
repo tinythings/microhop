@@ -15,3 +15,4 @@ push = true
 "profile/Cargo.toml" = ['^version = "{version}"']
 "microgen/Cargo.toml" = ['^version = "{version}"']
 "src/microhop.rs" = ['^static VERSION: &str = "{version}";']
+"microgen/src/main.rs" = ['^static VERSION: &str = "{version}";']
