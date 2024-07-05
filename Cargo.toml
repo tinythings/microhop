@@ -59,6 +59,7 @@ uname = "0.1.1"
 walkdir = "2.5.0"
 zstd = "0.13.1"
 profile = { path = "profile" }
+syslib = { path = "syslib" }
 libblkid-rs = "0.3.2"
 uuid = "1.8.0"
 lazy_static = { version = "1.4.0", features = ["spin"] }
@@ -72,4 +73,4 @@ codegen-units = 1
 panic = "abort"
 
 [workspace]
-members = [".", "profile", "microgen"]
+members = [".", "profile", "microgen", "syslib"]

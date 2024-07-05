@@ -531,6 +531,7 @@ dependencies = [
  "kmoddep",
  "nix",
  "profile",
+ "syslib",
  "walkdir",
  "zstd",
 ]
@@ -550,6 +551,7 @@ dependencies = [
  "profile",
  "serde",
  "serde_yaml",
+ "syslib",
  "uname",
  "uuid",
  "walkdir",
@@ -843,6 +845,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "syslib"
+version = "0.0.9"
+dependencies = [
+ "libblkid-rs",
+ "log",
+ "nix",
+ "walkdir",
 ]
 
 [[package]]

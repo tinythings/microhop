@@ -1,3 +1,4 @@
+mod analyser;
 mod clidef;
 mod rdgen;
 mod rdpack;
