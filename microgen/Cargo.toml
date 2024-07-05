@@ -14,7 +14,6 @@ clap = { version = "4.5.4", features = [
 ] }
 colored = "2.1.0"
 cpio = "0.4.0"
-humane_commands = "0.1.2"
 kmoddep = "0.1.4"
 #kmoddep = { path = "../../kmoddep" }
 nix = { version = "0.28.0", features = [
@@ -54,6 +53,5 @@ nix = { version = "0.28.0", features = [
 ] }
 
 profile = { path = "../profile" }
-syslib = { path = "../syslib" }
 walkdir = "2.5.0"
 zstd = "0.13.1"
