@@ -25,7 +25,7 @@ impl SysAnalyser {
 
     /// Get a device that are mounted to a root
     fn get_root_device_path(&self) -> Result<String, Error> {
-        for data in BufReader::new(File::open("/proc/mounts")?).lines().flatten() {
+        for data in BufReader::new(File::open("/proc/mounts")?).lines().map_while(Result::ok) {
             let mpt = data.split_whitespace().collect::<Vec<&str>>();
             if mpt[1].eq("/") {
                 return Ok(mpt[0].to_string());
