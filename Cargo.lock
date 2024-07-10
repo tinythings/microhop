@@ -361,8 +361,6 @@ dependencies = [
 [[package]]
 name = "kmoddep"
 version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "154db096c4c633bee0537320084b28b55427d65ea97800c3c9b5d6e241e072d3"
 
 [[package]]
 name = "lazy_static"
@@ -454,6 +452,7 @@ dependencies = [
  "kmoddep",
  "nix",
  "profile",
+ "syslib",
  "walkdir",
  "zstd",
 ]

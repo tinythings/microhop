@@ -3,17 +3,17 @@ mod clidef;
 mod rdgen;
 mod rdpack;
 
-use clap::{ArgMatches, Error};
+use clap::ArgMatches;
 use colored::Colorize;
 use kmoddep::{kerman::KernelInfo, modinfo::lsmod};
 use rdgen::IrfsGen;
-use std::path::PathBuf;
+use std::{error::Error, io, path::PathBuf};
 
 static VERSION: &str = "0.0.9";
 static APPNAME: &str = "microgen";
 
 /// Run information section
-fn run_info(params: &ArgMatches) -> Result<(), Error> {
+fn run_info(params: &ArgMatches) -> Result<(), Box<dyn Error>> {
     let rfs = params.get_one::<String>("list").map(|v| v.as_str());
     let k_info = kmoddep::get_kernel_infos(rfs)?;
 
@@ -42,13 +42,18 @@ fn run_info(params: &ArgMatches) -> Result<(), Error> {
 }
 
 /// Run analysis and profile generator
-fn run_analyse(_params: &ArgMatches) -> Result<(), Error> {
-    println!("Not implemented yet :-(");
+fn run_analyse(_params: &ArgMatches) -> Result<(), Box<dyn Error>> {
+    if !nix::unistd::Uid::effective().is_root() {
+        return Err(Box::new(io::Error::new(io::ErrorKind::Unsupported, "error: superuser privileges required")));
+    }
+
+    let cfg = analyser::SysAnalyser::new().get_config(kmoddep::get_kernel_infos(None)?);
+
     Ok(())
 }
 
 /// Create a new initramfs
-fn run_new(params: &ArgMatches) -> Result<(), Error> {
+fn run_new(params: &ArgMatches) -> Result<(), Box<dyn Error>> {
     let x_mods: Vec<String> = params.get_many::<String>("extract").unwrap_or_default().map(|s| s.to_string()).collect();
     let k_info = kmoddep::get_kernel_infos(Some(params.get_one::<String>("root").unwrap()));
     let profile = params.get_one::<String>("config");
@@ -92,7 +97,7 @@ fn run_new(params: &ArgMatches) -> Result<(), Error> {
 }
 
 #[allow(clippy::unit_arg)]
-fn main() -> Result<(), Error> {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = clidef::clidef(VERSION, APPNAME);
     let params = cli.to_owned().get_matches();
     if params.get_flag("version") {

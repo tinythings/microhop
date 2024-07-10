@@ -53,5 +53,6 @@ nix = { version = "0.28.0", features = [
 ] }
 
 profile = { path = "../profile" }
+syslib = { path = "../syslib" }
 walkdir = "2.5.0"
 zstd = "0.13.1"

@@ -7,6 +7,7 @@ use std::{
 
 /// Block device metadata.
 /// This contains its path, UUID, size and other info
+#[derive(Clone)]
 pub struct BlkDev {
     path: PathBuf,
     uuid: String,
@@ -30,9 +31,21 @@ impl BlkDev {
     pub fn get_label(&self) -> &str {
         &self.label
     }
+
+    /// Fall back one after another: UUID, LABEL, PATH
+    pub fn get_mount_criterion(&self) -> &str {
+        for mpt in [self.label.as_str(), self.uuid.as_str(), self.path.to_str().unwrap()] {
+            if !mpt.is_empty() {
+                return mpt;
+            }
+        }
+
+        "/dev/null" // :-)
+    }
 }
 
 /// Block device manager
+#[derive(Clone)]
 pub struct BlkInfo {
     devices: Vec<BlkDev>,
 }
