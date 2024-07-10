@@ -25,7 +25,7 @@ impl SysAnalyser {
 
     /// Get a device that are mounted to a root
     fn get_root_device_path(&self) -> Result<String, Error> {
-        for data in BufReader::new(File::open("/proc/mounts")?).lines().into_iter().flatten() {
+        for data in BufReader::new(File::open("/proc/mounts")?).lines().flatten() {
             let mpt = data.split_whitespace().collect::<Vec<&str>>();
             if mpt[1].eq("/") {
                 return Ok(mpt[0].to_string());
@@ -59,7 +59,7 @@ impl SysAnalyser {
     /// Return a composed configuration
     pub fn get_config(&self, kinfos: Vec<KernelInfo>) -> Result<MhConfig, Error> {
         let krelease = uname()?.release().to_str().unwrap().to_string();
-        let kinfo = kinfos.iter().filter(|nfo| nfo.version.eq(&krelease)).next();
+        let kinfo = kinfos.iter().find(|nfo| nfo.version.eq(&krelease));
         if kinfo.is_none() {
             return Err(Error::new(
                 std::io::ErrorKind::NotFound,
