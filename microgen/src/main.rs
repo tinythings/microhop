@@ -9,7 +9,7 @@ use kmoddep::{kerman::KernelInfo, modinfo::lsmod};
 use rdgen::IrfsGen;
 use std::{error::Error, io, path::PathBuf};
 
-static VERSION: &str = "0.0.9";
+static VERSION: &str = "0.1.0";
 static APPNAME: &str = "microgen";
 
 /// Run information section
