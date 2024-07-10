@@ -1,7 +1,7 @@
-use crate::rfsutils::{self, blk::BlkInfo};
 use lazy_static::lazy_static;
 use profile::cfg::MhConfig;
 use std::io::Error;
+use syslib::blk::BlkInfo;
 use uuid::Uuid;
 
 static VERSION: &str = "0.0.9";
@@ -42,7 +42,7 @@ pub fn greet(cfg: &MhConfig) -> Result<(), Error> {
 /// Mount configured filesystems in a batch
 pub fn mount_fs(filesystems: &Vec<(String, String, String)>) {
     for t in filesystems {
-        match rfsutils::fs::mount(&t.0, &t.1, &t.2) {
+        match syslib::fs::mount(&t.0, &t.1, &t.2) {
             Ok(_) => (),
             Err(err) => log::error!("Error mounting {}: {}", t.2, err),
         }

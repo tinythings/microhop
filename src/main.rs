@@ -1,11 +1,8 @@
+mod kmodprobe;
 mod logger;
 mod microhop;
-mod rfsutils;
 
-use crate::{
-    microhop::{get_blk_devices, greet, mount_fs, SYS_MPT},
-    rfsutils::kmodprobe,
-};
+use crate::microhop::{get_blk_devices, greet, mount_fs, SYS_MPT};
 use nix::{mount::MsFlags, sys::stat, unistd};
 use std::{ffi::CString, io::Error, path::Path};
 
@@ -50,7 +47,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Pivot the system
-    rfsutils::fs::pivot(temp_mpt, root_fstype.as_str())?;
+    syslib::fs::pivot(temp_mpt, root_fstype.as_str())?;
 
     // Start external init
     log::info!("Launching init at {}", cfg.get_init_path());

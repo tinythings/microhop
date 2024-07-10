@@ -3,10 +3,15 @@ name = "profile"
 version = "0.0.9"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-indexmap = { version = "2.2.6", features = ["arbitrary", "borsh", "quickcheck", "rayon", "rustc-rayon", "serde"] }
+indexmap = { version = "2.2.6", features = [
+    "arbitrary",
+    "borsh",
+    "quickcheck",
+    "rayon",
+    "rustc-rayon",
+    "serde",
+] }
 log = "0.4.21"
 serde = { version = "1.0.199", features = ["derive"] }
 serde_yaml = "0.9.34"

@@ -6,17 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.38"
 colored = "2.1.0"
-indexmap = { version = "2.2.6", features = [
-    "arbitrary",
-    "borsh",
-    "quickcheck",
-    "rayon",
-    "rustc-rayon",
-    "serde",
-] }
-kmoddep = "0.1.2"
 log = "0.4.21"
 nix = { version = "0.28.0", features = [
     "kmod",
@@ -53,13 +43,11 @@ nix = { version = "0.28.0", features = [
     "ucontext",
     "time",
 ] }
-serde = { version = "1.0.198", features = ["derive"] }
-serde_yaml = "0.9.34"
 uname = "0.1.1"
 walkdir = "2.5.0"
 zstd = "0.13.1"
 profile = { path = "profile" }
-libblkid-rs = "0.3.2"
+syslib = { path = "syslib" }
 uuid = "1.8.0"
 lazy_static = { version = "1.4.0", features = ["spin"] }
 
@@ -72,4 +60,4 @@ codegen-units = 1
 panic = "abort"
 
 [workspace]
-members = [".", "profile", "microgen"]
+members = [".", "profile", "microgen", "syslib"]

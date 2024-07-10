@@ -45,7 +45,7 @@ impl MhConfDisk {
 }
 
 /// Main configuration struct
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MhConfig {
     modules: Vec<String>,
     disks: IndexMap<String, String>,
@@ -55,6 +55,10 @@ pub struct MhConfig {
 }
 
 impl MhConfig {
+    pub fn new() -> MhConfig {
+        MhConfig { ..Default::default() }
+    }
+
     /// Return list of modules
     pub fn get_modules(&self) -> &[String] {
         &self.modules

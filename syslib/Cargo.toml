@@ -1,21 +1,11 @@
 [package]
-name = "microgen"
+name = "syslib"
 version = "0.0.9"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.5.4", features = [
-    "string",
-    "env",
-    "unicode",
-    "unstable-doc",
-    "unstable-styles",
-    "wrap_help",
-] }
-colored = "2.1.0"
-cpio = "0.4.0"
-kmoddep = "0.1.5"
-#kmoddep = { path = "../../kmoddep" }
+libblkid-rs = "0.3.2"
+log = "0.4.21"
 nix = { version = "0.28.0", features = [
     "kmod",
     "default",
@@ -51,8 +41,4 @@ nix = { version = "0.28.0", features = [
     "ucontext",
     "time",
 ] }
-
-profile = { path = "../profile" }
-syslib = { path = "../syslib" }
 walkdir = "2.5.0"
-zstd = "0.13.1"
