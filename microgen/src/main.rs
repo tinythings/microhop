@@ -47,7 +47,7 @@ fn run_analyse(_params: &ArgMatches) -> Result<(), Box<dyn Error>> {
         return Err(Box::new(io::Error::new(io::ErrorKind::Unsupported, "error: superuser privileges required")));
     }
 
-    let cfg = analyser::SysAnalyser::new().get_config(kmoddep::get_kernel_infos(None)?);
+    let _cfg = analyser::SysAnalyser::new().get_config(kmoddep::get_kernel_infos(None)?)?;
 
     Ok(())
 }
