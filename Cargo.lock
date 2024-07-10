@@ -446,7 +446,7 @@ dependencies = [
 
 [[package]]
 name = "microgen"
-version = "0.0.9"
+version = "0.1.0"
 dependencies = [
  "clap",
  "colored",
@@ -461,7 +461,7 @@ dependencies = [
 
 [[package]]
 name = "microhop"
-version = "0.0.9"
+version = "0.1.0"
 dependencies = [
  "colored",
  "lazy_static",
@@ -544,7 +544,7 @@ dependencies = [
 
 [[package]]
 name = "profile"
-version = "0.0.9"
+version = "0.1.0"
 dependencies = [
  "indexmap",
  "log",

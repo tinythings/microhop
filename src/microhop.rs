@@ -4,7 +4,7 @@ use std::io::Error;
 use syslib::blk::BlkInfo;
 use uuid::Uuid;
 
-static VERSION: &str = "0.0.9";
+static VERSION: &str = "0.1.0";
 
 // Mount required system dirs
 lazy_static! {
