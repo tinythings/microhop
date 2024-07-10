@@ -142,3 +142,9 @@ impl BlkInfo {
         &self.devices
     }
 }
+
+impl Default for BlkInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
