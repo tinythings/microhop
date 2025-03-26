@@ -1,11 +1,12 @@
+/*
+Utilities for the root filesystem operations.
+This module is intended to do all the basic operations those are typically
+done by external utils, such as mount, umount, switch root etc.
+*/
+
 use nix::{mount::MsFlags, sys::statvfs, unistd};
 use std::{fs, io::Error};
 use walkdir::WalkDir;
-
-/// Utilities for the root filesystem operations.
-///
-/// This module is intended to do all the basic operations those are typically
-/// done by external utils, such as mount, umount, switch root etc.
 
 /// Returns filesystem type
 fn fs_type(p: &str) -> Result<u64, Error> {
