@@ -45,6 +45,9 @@ build-release:
 
 	@printf "\n\nDone. Debug version is built for you in target/release\n\n"
 
+test:
+	#cargo nextest run --workspace
+
 tar:
 	rm -rf package/${ARC_NAME}
 	cargo vendor
