@@ -48,6 +48,12 @@ build-release:
 test:
 	#cargo nextest run --workspace
 
+check:
+	cargo clippy --all -- -Dwarnings -Aunused-variables -Adead-code
+
+fix:
+	cargo clippy --fix --allow-dirty --allow-staged --all
+
 tar:
 	rm -rf package/${ARC_NAME}
 	cargo vendor
