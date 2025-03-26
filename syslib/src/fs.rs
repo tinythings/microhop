@@ -1,8 +1,7 @@
-/*
-Utilities for the root filesystem operations.
-This module is intended to do all the basic operations those are typically
-done by external utils, such as mount, umount, switch root etc.
-*/
+//! Utilities for the root filesystem operations.
+//!
+//! This module is intended to do all the basic operations those are typically
+//! done by external utils, such as mount, umount, switch root etc.
 
 use nix::{mount::MsFlags, sys::statvfs, unistd};
 use std::{fs, io::Error};

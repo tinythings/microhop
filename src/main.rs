@@ -31,7 +31,7 @@ fn main() -> Result<(), Error> {
         log::debug!("Init sysroot path: {}", temp_mpt);
     }
 
-    mount_fs(&SYS_MPT);
+    mount_fs(SYS_MPT);
 
     let (root_fstype, blk_mpt) = get_blk_devices(&cfg)?;
     if root_fstype.is_empty() {
@@ -41,9 +41,9 @@ fn main() -> Result<(), Error> {
 
     // Remount sysfs, switch root
     log::debug!("switching root");
-    for t in &*SYS_MPT {
-        let tgt = format!("{}{}", temp_mpt, t.2);
-        nix::mount::mount(Some(t.2.as_str()), tgt.as_str(), Some(t.0.as_str()), MsFlags::MS_MOVE, Option::<&str>::None)?;
+    for t in SYS_MPT {
+        let tgt = format!("{}{}", temp_mpt, t.dst);
+        nix::mount::mount(Some(t.dst), tgt.as_str(), Some(t.fstype), MsFlags::MS_MOVE, Option::<&str>::None)?;
     }
 
     // Pivot the system
