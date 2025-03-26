@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use profile::cfg::MhConfig;
 use std::io::Error;
 use syslib::blk::BlkInfo;
@@ -6,14 +5,25 @@ use uuid::Uuid;
 
 static VERSION: &str = "0.1.0";
 
-// Mount required system dirs
-lazy_static! {
-    pub static ref SYS_MPT: Vec<(String, String, String)> = vec![
-        ("proc".into(), "none".into(), "/proc".into()), // Has to go always first
-        ("sysfs".into(), "none".into(), "/sys".into()),
-        ("devtmpfs".into(), "devtmpfs".into(), "/dev".into())
-    ];
+pub struct SystemDir<T: AsRef<str>> {
+    pub fstype: T,
+    pub dev: T,
+    pub dst: T,
 }
+
+impl<T: AsRef<str>> SystemDir<T> {
+    const fn new(fstype: T, dev: T, dst: T) -> Self {
+        Self { fstype, dev, dst }
+    }
+}
+
+// Mount required system dirs
+pub const SYS_MPT: &[SystemDir<&'static str>] = &[
+    // Has to go always first
+    SystemDir::new("proc", "none", "/proc"),
+    SystemDir::new("sysfs", "none", "/sys"),
+    SystemDir::new("devtmpfs", "devtmpfs", "/dev"),
+];
 
 // Initial greetings
 pub fn greet(cfg: &MhConfig) -> Result<(), Error> {
@@ -40,18 +50,16 @@ pub fn greet(cfg: &MhConfig) -> Result<(), Error> {
 }
 
 /// Mount configured filesystems in a batch
-pub fn mount_fs(filesystems: &Vec<(String, String, String)>) {
+pub fn mount_fs<T: AsRef<str>>(filesystems: &[SystemDir<T>]) {
     for t in filesystems {
-        match syslib::fs::mount(&t.0, &t.1, &t.2) {
-            Ok(_) => (),
-            Err(err) => log::error!("Error mounting {}: {}", t.2, err),
-        }
+        if let Err(err) = syslib::fs::mount(t.fstype.as_ref(), t.dev.as_ref(), t.dst.as_ref()) {
+            log::error!("Error mounting {}: {}", t.dst.as_ref(), err);
+        };
     }
 }
 
-#[allow(clippy::type_complexity)]
 /// Get block devices
-pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<(String, String, String)>), Error> {
+pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<SystemDir<String>>), Error> {
     let mut root_fstype = String::new();
     let mut blkid = BlkInfo::new();
 
@@ -63,7 +71,7 @@ pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<(String, String, S
         }
     }
 
-    let mut blk_mpt: Vec<(String, String, String)> = Vec::default();
+    let mut blk_mpt: Vec<SystemDir<String>> = Vec::new();
     for dev in cfg.get_disks()? {
         let mpt = dev.get_mountpoint().trim_end_matches('/').to_string();
         if mpt.is_empty() && root_fstype.is_empty() {
@@ -87,12 +95,13 @@ pub fn get_blk_devices(cfg: &MhConfig) -> Result<(String, Vec<(String, String, S
         if devpath.is_empty() {
             log::warn!("Unknown device: {}", dev.get_device());
         } else {
-            blk_mpt.push((dev.get_fstype().into(), devpath.into(), format!("{}{}", &cfg.get_sysroot_path(), mpt)));
+            let dir = SystemDir::new(dev.get_fstype().into(), devpath.into(), format!("{}{}", &cfg.get_sysroot_path(), mpt));
+            blk_mpt.push(dir);
         }
     }
 
     // Sort mountpoints, so the "/" goes always first
-    blk_mpt.sort_by(|ela, elb| ela.1.cmp(&elb.1));
+    blk_mpt.sort_by(|ela, elb| ela.dev.cmp(&elb.dev));
 
     Ok((root_fstype, blk_mpt))
 }
