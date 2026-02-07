@@ -75,8 +75,8 @@ impl BlkInfo {
     fn load_blk_device(&mut self, dev: &str, stats: &Vec<String>) -> Result<(), Error> {
         log::debug!("Probing \"{}\" device", dev);
         for devname in stats {
-            // Get only partitions, omit the physical device
-            if devname.starts_with(dev) && !devname.eq(dev) {
+            // Get both partitions AND the raw device itself (for direct filesystems like squashfs on /dev/vda)
+            if devname.starts_with(dev) {
                 let dev = format!("/dev/{}", devname);
                 let blkid = self.blk_id(dev.as_str())?; // uuid, fstype
                 self.devices.push(BlkDev { path: PathBuf::from(dev), uuid: blkid.0, label: blkid.1, fstype: blkid.2 });
@@ -132,9 +132,9 @@ impl BlkInfo {
         self.devices.iter().find(|&d| d.get_path().eq(&PathBuf::from(p)))
     }
 
-    /// Resolve device by label path
+    /// Resolve device by label path (case-insensitive for better compatibility)
     pub fn by_label(&self, lbl: &str) -> Option<&BlkDev> {
-        self.devices.iter().find(|&d| d.get_label().eq(lbl))
+        self.devices.iter().find(|&d| d.get_label().eq_ignore_ascii_case(lbl))
     }
 
     /// Return all known block devices

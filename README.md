@@ -1,5 +1,7 @@
 # Microhop - initramfs helper
 
+![NixOS booting using microhop (video)](./nixos-aarch64-qemu.mp4)
+
 You do not always need Dracut. 😉 Sometimes you want it really-really
 small, tiny and completely stripped from everything. This is what
 `microhop` is for: use mainline Linux Kernel straight to the point,
@@ -46,29 +48,66 @@ you will need the following packages on openSUSE Leap:
 - `libblkid-devel-static`
 - `glibc-devel-static`
 
+### Building using Nix
+
+It's possible to build the binaries using [Nix](https://nixos.org/).
+
+The package is statically linked and uses [musl](https://www.musl-libc.org/) due to dependency on
+`util-linuxMinimal` which provides `libblkid`.
+
+```shell
+# Build the aarch64 variant
+$ nix build .#packages.aarch64-linux.microhop
+
+$ file result/bin/microhop
+result/bin/microhop: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), statically linked, stripped
+
+$ du -b result/bin/microhop
+1186064 result/bin/microhop
+```
+
+To run the demo shown in the captured [asciinema](https://asciinema.org/) do the following:
+```
+# To exit QEMU type Ctrl+A X
+nix run .#boot-overlayfs-musl
+```
+
+**Note:** Flake-based derivations and Cachix substitutes are available for faster,
+reproducible builds; see `flake.nix` and the `nixos/` examples.
+
+To list available nix derivations run:
+```
+nix flake show
+```
+
+To speed up the build there's a [Cachix](https://app.cachix.org/cache/mobile-nixos-next#search) available.
 
 ### Configuration
 
 Configuration is also a profile. This is the basic start:
 
 ```yaml
-# The list of kernel modules
+# What kernel modules to load
+# NOTE: currently one needs to load
+#       far dependencies first, and then
+#       the final module, otherwise it won't do. :)
 modules:
   - virtio_blk
-  - xfs
+  - jbd2
+  - crc16
+  - mbcache
+  - ext4
 
-# Devices
+# Devices mounting
+# NOTE: If kernel command line includes root= parameter, it will override
+#       the disk configuration below. This allows bootloader to specify rootfs.
 disks:
-  # Directly access device:
-  # /dev/vda3: xfs,/,rw
-  #
-  # Access device via label:
-  # ROOT: xfs,/,rw
-  #
-  # Access device via UUID:
-  24e1daee-e09b-4fd5-97f3-dde8aba6ad8a: xfs,/,rw
+# Preferred methods (most reliable):
+# By UUID (recommended):
+  uuid=24e1daee-e09b-4fd5-97f3-dde8aba6ad8a: ext4,/,rw
 
-# Optionally, define a custom init app
+# Optionally, define another init app, if it is not /sbin/init
+# This app will be launched with PID 1 and should never quit.
 init: /usr/bin/bash
 
 # Optionally, define a temporary sysroot.
@@ -81,7 +120,37 @@ sysroot: /sysroot
 # - info (default)
 # - quiet (errors only)
 log: debug
+
+# Optionally, enable overlayfs support
+# This creates a writable layer on top of the read-only root filesystem.
+# Useful for systems with read-only filesystems like squashfs or when booting from
+# read-only media. Requires kernel CONFIG_OVERLAY_FS support.
+#
+# overlayfs:
+#   device: uuid=12345678-1234-1234-1234-123456789abc  # or label=overlay-storage or /dev/vdb1
+#   upper: upper      # Path on the mounted device for the upper layer
+#   workdir: work     # Path on the mounted device for overlayfs work directory
+
+# Firmware configuration
+# Defines the base path for firmware files in the initramfs
+# Default: /lib/firmware
+firmware:
+  base: /lib/firmware
+
+# Optionally, mask (ignore) specific kernel cmdline parameters
+# This is useful when the bootloader passes conflicting parameters that you want to override
+# with values from this config file instead.
+#
+# Common use case: Android bootloaders often pass a hardcoded root=PARTUUID=... that doesn't
+# match the actual filesystem. By masking "root", microhop will ignore the bootloader's
+# parameter and use the disk configuration above instead.
+#
+# mask_cmdline:
+#   - root       # Ignore root= from bootloader, use disks config instead
 ```
+
+To validate the config use `microgen validate` to sanity-check your `microhop.conf` before generating an
+initramfs.
 
 Resulting configuration will just contain more modules (their dependencies). The rest will be passed through.
 
@@ -109,6 +178,9 @@ To achieve this, do the following:
 
    This command above is analysing your root filesystem at `/mnt`, will use `microhop.conf` as a profile and will write the output CPIO archive to the path, specified by `--file` option.
 
+   `microgen` supports embedding `e2fsck` binary to recover filesystem from errors and to include additional
+firmware files or embedded binaries
+
 3. Un-mount your image:
 
    ```shell
@@ -116,3 +188,7 @@ To achieve this, do the following:
    ```
 
 That's basically it and hopefully it will even boot... 😉
+
+## [Changelog](./CHANGELOG.md)
+
+Feel free to checkout the changes between the releases.

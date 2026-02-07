@@ -27,7 +27,7 @@ impl SysAnalyser {
     fn get_root_device_path(&self) -> Result<String, Error> {
         for data in BufReader::new(File::open("/proc/mounts")?).lines().map_while(Result::ok) {
             let mpt = data.split_whitespace().collect::<Vec<&str>>();
-            if mpt[1].eq("/") {
+            if mpt.len() >= 2 && mpt[1].eq("/") {
                 return Ok(mpt[0].to_string());
             }
         }

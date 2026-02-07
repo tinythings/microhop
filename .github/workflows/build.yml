@@ -1,0 +1,139 @@
+name: Build Nix Packages
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - '[0-9]*.[0-9]*.[0-9]*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: aarch64-linux
+            package: microhop
+            runs-on: ubuntu-latest
+          - system: aarch64-linux
+            package: microhop
+            runs-on: ubuntu-latest
+          - system: x86_64-linux
+            package: microhop
+            runs-on: ubuntu-latest
+
+    runs-on: ${{ matrix.runs-on }}
+    name: Build ${{ matrix.package }} (${{ matrix.system }})
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            extra-platforms = aarch64-linux x86_64-linux
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: microhop
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          skipPush: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: true
+
+      - name: Configure QEMU for cross-compilation
+        if: runner.os == 'Linux' && matrix.system == 'aarch64-linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y qemu-user-static binfmt-support
+
+      - name: Build package
+        run: |
+          nix build .#packages.${{ matrix.system }}.${{ matrix.package }} -L
+
+      - name: Check build output
+        run: |
+          ls -lah result/
+          nix path-info .#packages.${{ matrix.system }}.${{ matrix.package }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package }}-${{ matrix.system }}
+          path: result/
+          retention-days: 7
+
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/') && contains(github.ref, '.')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for version
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          CHANGELOG=$(awk "/## \[$VERSION\]/,/## \[/" CHANGELOG.md | sed '1d;$d' | sed '/^$/d')
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG=$(awk "/## \[Unreleased\]/,/## \[/" CHANGELOG.md | sed '1d;$d' | sed '/^$/d')
+          fi
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="Release version $VERSION"
+          fi
+
+          echo "$CHANGELOG" > changelog_excerpt.txt
+
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          cd artifacts
+          for dir in */; do
+            artifact_name="${dir%/}"
+            if [ -d "$dir/bin" ]; then
+              tar -czf "../release-assets/${artifact_name}.tar.gz" -C "$dir" .
+            fi
+          done
+          cd ..
+          ls -lah release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.version.outputs.tag }}
+          body_path: changelog_excerpt.txt
+          files: release-assets/*.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

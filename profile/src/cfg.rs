@@ -44,14 +44,47 @@ impl MhConfDisk {
     }
 }
 
+/// Overlayfs configuration
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct OverlayfsConfig {
+    pub device: String,
+    pub upper: String,
+    pub workdir: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FirmwareConfig {
+    pub base: String,
+}
+
+/// NixOS configuration
+#[cfg(feature = "nixos")]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NixosConfig {
+    pub nix_path: String,
+}
+
+/// Metadata about the configuration generation
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ConfigMetadata {
+    pub git_commit: String,
+    pub generated_at: String,
+}
+
 /// Main configuration struct
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MhConfig {
+    metadata: Option<ConfigMetadata>,
     modules: Vec<String>,
     disks: IndexMap<String, String>,
     init: Option<String>,
     sysroot: Option<String>,
     log: Option<String>,
+    overlayfs: Option<OverlayfsConfig>,
+    firmware: Option<FirmwareConfig>,
+    mask_cmdline: Option<Vec<String>>,
+    #[cfg(feature = "nixos")]
+    nixos: Option<NixosConfig>,
 }
 
 impl MhConfig {
@@ -115,6 +148,38 @@ impl MhConfig {
     /// Get a sysroot temp path
     pub fn get_sysroot_path(&self) -> String {
         self.sysroot.to_owned().unwrap_or("/sysroot".to_string())
+    }
+
+    pub fn use_overlayfs(&self) -> bool {
+        self.overlayfs.is_some()
+    }
+
+    pub fn get_overlayfs(&self) -> Option<&OverlayfsConfig> {
+        self.overlayfs.as_ref()
+    }
+
+    pub fn get_firmware(&self) -> Option<&FirmwareConfig> {
+        self.firmware.as_ref()
+    }
+
+    pub fn get_firmware_base(&self) -> String {
+        self.firmware.as_ref().map(|f| f.base.clone()).unwrap_or("/lib/firmware".to_string())
+    }
+
+    /// Get list of cmdline parameters to mask/ignore
+    pub fn get_mask_cmdline(&self) -> Vec<String> {
+        self.mask_cmdline.clone().unwrap_or_default()
+    }
+
+    /// Get configuration metadata (git commit and generation timestamp)
+    pub fn get_metadata(&self) -> Option<&ConfigMetadata> {
+        self.metadata.as_ref()
+    }
+
+    /// Get NixOS configuration
+    #[cfg(feature = "nixos")]
+    pub fn get_nixos(&self) -> Option<&NixosConfig> {
+        self.nixos.as_ref()
     }
 }
 

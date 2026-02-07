@@ -40,7 +40,13 @@ impl KModProbe {
     /// Load a kernel module
     pub fn modprobe(&self, name: &str) {
         let mp: PathBuf = if !name.contains('/') || !name.contains('.') {
-            self.find_module(name).unwrap_or_default()
+            match self.find_module(name) {
+                Some(path) => path,
+                None => {
+                    log::error!("Kernel module {} not found in {}", name, self.km_path.display());
+                    return;
+                }
+            }
         } else {
             self.km_path.join(name)
         };

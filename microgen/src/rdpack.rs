@@ -71,7 +71,13 @@ impl InitRamfsPacker {
         }
 
         let out = trailer(out).unwrap();
-        let mut encoder = Encoder::new(File::create(format!("../{}", output)).unwrap(), 10).unwrap();
+
+        let output_path = PathBuf::from(output);
+        if let Some(parent) = output_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        let mut encoder = Encoder::new(File::create(output)?, 10)?;
         encoder.write_all(&out.into_inner().unwrap().into_inner())?;
         encoder.finish()?;
 

@@ -19,5 +19,5 @@ tab_spaces = 4
 
 # Perks
 use_field_init_shorthand = true
-fn_args_layout = "Compressed"
+fn_params_layout = "Compressed"
 use_try_shorthand = true
