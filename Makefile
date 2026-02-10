@@ -1,15 +1,15 @@
 .DEFAULT_GOAL := build
 .PHONY:build microhop-release-static microhop-debug-static microgen-release microgen-debug _reset_placeholder
 
-ARCH := $(shell uname -p)
+ARCH := $(shell uname -m)
 ARC_VERSION := $(shell cat src/microhop.rs | grep 'static VERSION' | sed -e 's/.*=//g' -e 's/[" ;]//g')
 ARC_NAME := microhop-${ARC_VERSION}
 
 microhop-release-static:
-	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target $(ARCH)-unknown-linux-gnu --release
+	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target $(ARCH)-unknown-linux-musl --release
 
 microhop-debug-static:
-	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target $(ARCH)-unknown-linux-gnu
+	RUSTFLAGS='-C target-feature=+crt-static' cargo build -p microhop --target $(ARCH)-unknown-linux-musl
 
 microgen-release:
 	cargo build -p microgen --release
@@ -25,7 +25,7 @@ build-debug:
 	@printf "Building Microhop (debug)\n"
 	@$(MAKE) microhop-debug-static
 
-	cp target/$(ARCH)-unknown-linux-gnu/debug/microhop microgen/src
+	cp target/$(ARCH)-unknown-linux-musl/debug/microhop microgen/src
 
 	@printf "Building Microgen\n"
 	@$(MAKE) microgen-debug
@@ -37,7 +37,7 @@ build-release:
 	@printf "Building Microhop (release)\n"
 	@$(MAKE) microhop-release-static
 
-	cp target/$(ARCH)-unknown-linux-gnu/release/microhop microgen/src
+	cp target/$(ARCH)-unknown-linux-musl/release/microhop microgen/src
 
 	@printf "Building Microgen\n"
 	@$(MAKE) microgen-release
